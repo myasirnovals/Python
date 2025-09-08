@@ -28,3 +28,6 @@ class Account:
         print("\nTransaction History:")
         for transaction in self.transactions:
             print(f"${transaction.amount} {transaction.transaction_type}")
+
+    def display_balance(self):
+        print(f"\nCurrent Balance for Account {self.account_number}: ${self.balance}")
