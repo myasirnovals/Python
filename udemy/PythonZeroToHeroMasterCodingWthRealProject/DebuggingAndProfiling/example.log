@@ -1,0 +1,5 @@
+2025-09-09 14:01:20,292 - DEBUG - this is a debug message!
+2025-09-09 14:01:20,292 - INFO - this is an info message!
+2025-09-09 14:01:20,293 - WARNING - this is a warning message!
+2025-09-09 14:01:20,293 - ERROR - this is an error message!
+2025-09-09 14:01:20,293 - CRITICAL - this is a critical message!
