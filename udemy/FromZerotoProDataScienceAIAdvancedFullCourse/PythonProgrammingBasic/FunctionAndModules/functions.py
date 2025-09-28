@@ -1,6 +1,10 @@
 # def function_name(parameters):
 #     TODO Something
 
+# Import keyword
+import math as m
+print(m.sqrt(16))
+
 # Function with parameters and return value
 def add_numbers(a, b):
     return a + b
