@@ -1,3 +1,20 @@
+# Lab Report Generator - creates formatted practicum reports from user input.
+# Copyright (C) 2026 Muhamad Yasir Noval
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Contact: myasirnoval23@if.unjani.ac.id
+
 import os
 import time
 import json
