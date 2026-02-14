@@ -194,8 +194,8 @@ class App(tk.Tk):
         
         k_btns = ttk.Frame(self.kode_container)
         k_btns.pack(side="right", padx=(10, 0))
-        ttk.Button(k_btns, text="Add Code", command=self._add_kode_logic).pack(fill="x", pady=2)
-        ttk.Button(k_btns, text="Remove", command=self._remove_kode_logic).pack(fill="x")
+        ttk.Button(k_btns, text="Tambah Kode", command=self._add_kode_logic).pack(fill="x", pady=2)
+        ttk.Button(k_btns, text="Hapus", command=self._remove_kode_logic).pack(fill="x")
 
         # Area Gambar (Global)
         img_label = ttk.Label(content_frame, text="Lampiran Gambar:", style="Subheader.TLabel")
@@ -315,10 +315,35 @@ class App(tk.Tk):
                 self.gambar_listbox.insert(tk.END, f"🖼️ {os.path.basename(g['path'])} ({g['caption']})")
 
     def _add_kode_logic(self):
-        res = self._open_kode_dialog()
-        if res:
-            self.kode_items.append(res)
-            self._refresh_dialog_lists()
+        """Langsung membuka browser file untuk memilih source code"""
+        paths = filedialog.askopenfilenames(
+            title="Pilih File Source Code",
+            filetypes=[
+                ("Source Code", "*.py;*.c;*.cpp;*.java;*.js;*.html;*.css;*.php;*.sql;*.txt"),
+                ("All Files", "*.*")
+            ]
+        )
+        
+        if not paths:
+            return
+
+        for path in paths:
+            try:
+                # Membaca isi file secara otomatis dengan encoding utf-8
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                
+                nama_file = os.path.basename(path)
+                
+                # Masukkan ke daftar items
+                self.kode_items.append({
+                    "nama": nama_file,
+                    "isi": content
+                })
+            except Exception as e:
+                messagebox.showerror("Error", f"Gagal membaca file {os.path.basename(path)}: {e}")
+        
+        self._refresh_dialog_lists()
 
     def _remove_kode_logic(self):
         sel = self.kode_listbox.curselection()
