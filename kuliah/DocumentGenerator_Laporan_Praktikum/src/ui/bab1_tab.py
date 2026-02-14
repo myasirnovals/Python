@@ -29,7 +29,7 @@ class Bab1Tab(ttk.Frame):
         header_frame.pack(fill="x", pady=(0, 10))
         ttk.Label(
             header_frame,
-            text="Daftar Sub-Bab (Langkah Kerja)",
+            text="Daftar Hasil Praktikum",
             style="Header.TLabel",
         ).pack(side="left")
 
