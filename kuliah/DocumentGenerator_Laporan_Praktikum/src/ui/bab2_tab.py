@@ -13,7 +13,7 @@ def build_bab2_tab(app, parent):
     btn_frame = ttk.Frame(frame)
     btn_frame.pack(fill="x", pady=10)
     
-    ttk.Button(btn_frame, text="+ Tambah Tugas", command=app._add_bab2).pack(side="left", padx=2)
+    ttk.Button(btn_frame, text="+ Tambah Sub-Bab Tugas", command=app._add_bab2).pack(side="left", padx=2)
     ttk.Button(btn_frame, text="✏️ Edit", command=app._edit_bab2).pack(side="left", padx=2)
     ttk.Button(btn_frame, text="🗑️ Hapus", command=app._remove_bab2).pack(side="left", padx=2)
 

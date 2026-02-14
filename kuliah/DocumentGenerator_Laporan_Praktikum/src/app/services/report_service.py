@@ -1,6 +1,11 @@
 import os
 
-from docxtpl import DocxTemplate
+try:
+    import win32com.client as win32
+except Exception:  # pragma: no cover - optional dependency
+    win32 = None
+from docx import Document
+from docxtpl import DocxTemplate, RichText
 
 from app.doc_helpers import muat_gambar
 
@@ -27,8 +32,14 @@ class ReportService:
             list_kode_final = []
             if len(kode_items) > 0:
                 for i, d in enumerate(kode_items, 1):
-                    judul_tampil = f"{i}. {d['nama']}" if len(kode_items) > 1 else ""
-                    list_kode_final.append({"judul": judul_tampil, "isi": d.get("isi", "")})
+                    if len(kode_items) > 1:
+                        prefix = "\n" if i > 1 else ""
+                        judul_tampil = RichText(f"{prefix}{i}. {d.get('nama', '')}")
+                    else:
+                        judul_tampil = "##HAPUS##"
+                    list_kode_final.append(
+                        {"judul": judul_tampil, "isi": d.get("isi", "")}
+                    )
 
             list_gbr = []
             for g in item.get("gambar_paths", []):
@@ -56,6 +67,45 @@ class ReportService:
             )
 
         return daftar_sub_bab
+
+    @staticmethod
+    def _hapus_baris_hantu(nama_file):
+        print("🧹 Membersihkan baris kosong...")
+        try:
+            doc_bersih = Document(nama_file)
+            for p in list(doc_bersih.paragraphs):
+                if "##HAPUS##" in p.text:
+                    p._element.getparent().remove(p._element)
+                    print("   ✨ Satu baris judul kosong berhasil dihapus.")
+            doc_bersih.save(nama_file)
+        except Exception as e:
+            print(f"⚠️ Gagal membersihkan: {e}")
+
+    @staticmethod
+    def _update_toc_word(nama_file):
+        print("      ⏳ Sedang melakukan Auto-Update Daftar Isi & Gambar...")
+        if win32 is None:
+            print("      ⚠️ Win32COM tidak tersedia. Lewati update TOC otomatis.")
+            return
+        try:
+            path_lengkap = os.path.abspath(nama_file)
+            word_app = win32.Dispatch("Word.Application")
+            word_app.Visible = False
+            word_app.DisplayAlerts = False
+
+            doc = word_app.Documents.Open(path_lengkap)
+            for toc in doc.TablesOfContents:
+                toc.Update()
+            doc.Fields.Update()
+            doc.Save()
+            doc.Close()
+            word_app.Quit()
+            print("      ✅ Auto-Update Selesai! Dokumen siap cetak.")
+        except Exception as e:
+            print(
+                "      ⚠️ Gagal Auto-Update (Buka file manual lalu tekan Ctrl+A -> F9): "
+                f"{e}"
+            )
 
     def build_bab2_context(self, doc, bab2_items):
         daftar_tugas = []
@@ -104,3 +154,6 @@ class ReportService:
 
         doc.render(context)
         doc.save(output_path)
+
+        self._hapus_baris_hantu(output_path)
+        self._update_toc_word(output_path)

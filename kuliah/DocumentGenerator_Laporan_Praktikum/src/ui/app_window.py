@@ -37,6 +37,9 @@ class App(tk.Tk):
             "tahun": tk.StringVar(),
         }
         self.template_choice = tk.StringVar(value="1")
+        self.modul_path_var = tk.StringVar()
+        self.modul_text_cache = ""
+        self.modul_loaded_path = ""
         self.bab1_items = []
         self.bab2_items = []
         self.kesimpulan_text = None
@@ -93,8 +96,8 @@ class App(tk.Tk):
 
         tabs = [
             ("Cover", build_cover_tab),
-            ("Langkah Kerja", build_bab1_tab),
-            ("Tugas & Jawaban", build_bab2_tab),
+            ("Hasil Praktikum", build_bab1_tab),
+            ("Tugas Praktikum", build_bab2_tab),
             ("Kesimpulan", build_bab3_tab),
             ("Selesai", build_generate_tab)
         ]
@@ -107,10 +110,10 @@ class App(tk.Tk):
     # --- Refactored Dialogs ---
 
     def _open_bab1_dialog(self, initial=None):
-        """Dialog untuk Bab 1 yang dipercantik dengan tata letak yang lebih lega"""
+        """Dialog untuk Bab 1 dengan perbaikan layout agar tombol Simpan tidak hilang"""
         dialog = tk.Toplevel(self)
         dialog.title("Editor Langkah Kerja")
-        dialog.geometry("900x800")
+        dialog.geometry("950x850") # Sedikit lebih lebar dan tinggi
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
         dialog.grab_set()
@@ -119,8 +122,33 @@ class App(tk.Tk):
         tipe_var = tk.StringVar(value=data.get("tipe", "1"))
         judul_var = tk.StringVar(value=data.get("judul_sub_bab", ""))
 
+        # --- 1. BARIS TOMBOL (PACK DULUAN DI BAWAH) ---
+        # Dengan mem-pack ini lebih dulu ke arah 'bottom', 
+        # dia akan tetap terlihat meskipun konten di atasnya meluap.
+        btn_row = ttk.Frame(dialog, padding=(20, 10))
+        btn_row.pack(side="bottom", fill="x")
+        
+        # Garis pemisah tipis di atas tombol
+        ttk.Separator(dialog, orient="horizontal").pack(side="bottom", fill="x", padx=20)
+
+        res_val = {"data": None}
+        def save():
+            res_val["data"] = {
+                "judul_sub_bab": judul_var.get(),
+                "tipe": tipe_var.get(),
+                "isi_a": self.isi_a_text.get("1.0", "end-1c"),
+                "kode_files": self.kode_items,
+                "gambar_paths": self.gambar_items,
+                "analisa": analisa_text.get("1.0", "end-1c")
+            }
+            dialog.destroy()
+
+        ttk.Button(btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save).pack(side="right", padx=5)
+        ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
+
+        # --- 2. KONTEN UTAMA (PAKAI SCROLLABLE AREA JIKA PERLU) ---
         container = ttk.Frame(dialog, padding=20)
-        container.pack(fill="both", expand=True)
+        container.pack(side="top", fill="both", expand=True)
 
         # Bagian Atas: Info Dasar
         info_frame = ttk.LabelFrame(container, text=" Informasi Dasar ", padding=15)
@@ -135,15 +163,30 @@ class App(tk.Tk):
         ttk.Radiobutton(type_choice_frame, text="Source Code", variable=tipe_var, value="1").pack(side="left")
         ttk.Radiobutton(type_choice_frame, text="Langkah Deskriptif", variable=tipe_var, value="2").pack(side="left", padx=20)
 
+        # Widget Modul (khusus Langkah Deskriptif)
+        modul_frame = ttk.Frame(info_frame)
+        ttk.Label(modul_frame, text="File Modul:").pack(side="left")
+        ttk.Entry(modul_frame, textvariable=self.modul_path_var, width=50).pack(side="left", padx=10)
+        ttk.Button(modul_frame, text="Browse", command=self._browse_modul).pack(side="left", padx=2)
+        ttk.Button(modul_frame, text="Muat", command=self._load_modul_text).pack(side="left")
+
         # Bagian Tengah: Editor Konten
         content_frame = ttk.LabelFrame(container, text=" Isi & Dokumentasi ", padding=15)
         content_frame.pack(fill="both", expand=True)
 
-        # 1. Area Teks (untuk Langkah Kerja)
-        self.isi_a_text = scrolledtext.ScrolledText(content_frame, height=8, font=("Segoe UI", 10))
+        # Area Teks & Toolbar (Langkah Deskriptif)
+        self.isi_a_text = scrolledtext.ScrolledText(content_frame, height=6, font=("Segoe UI", 10))
         if data.get("isi_a"): self.isi_a_text.insert("1.0", data.get("isi_a"))
 
-        # 2. Area Kode
+        langkah_toolbar = ttk.Frame(content_frame)
+        ttk.Button(
+            langkah_toolbar,
+            text="✨ Generate Langkah Kerja (AI)",
+            style="Action.TButton",
+            command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text),
+        ).pack(side="left", pady=(0, 5))
+
+        # Area Kode (Source Code)
         self.kode_items = data.get("kode_files", [])
         self.kode_container = ttk.Frame(content_frame)
         self.kode_listbox = tk.Listbox(self.kode_container, height=6, font=("Consolas", 10))
@@ -154,15 +197,15 @@ class App(tk.Tk):
         ttk.Button(k_btns, text="Add Code", command=self._add_kode_logic).pack(fill="x", pady=2)
         ttk.Button(k_btns, text="Remove", command=self._remove_kode_logic).pack(fill="x")
 
-        # 3. Area Gambar (Selalu Muncul)
+        # Area Gambar (Global)
         img_label = ttk.Label(content_frame, text="Lampiran Gambar:", style="Subheader.TLabel")
-        img_label.pack(anchor="w", pady=(15, 5))
+        img_label.pack(anchor="w", pady=(10, 5))
         
         self.gambar_items = data.get("gambar_paths", [])
         img_main = ttk.Frame(content_frame)
         img_main.pack(fill="x")
         
-        self.gambar_listbox = tk.Listbox(img_main, height=4, font=("Segoe UI", 9))
+        self.gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
         self.gambar_listbox.pack(side="left", fill="both", expand=True)
         
         g_btns = ttk.Frame(img_main)
@@ -172,9 +215,9 @@ class App(tk.Tk):
 
         # Bagian Bawah: Analisa AI
         ai_frame = ttk.LabelFrame(container, text=" Analisa Hasil (AI) ", padding=15)
-        ai_frame.pack(fill="both", expand=True, pady=(15, 0))
+        ai_frame.pack(fill="both", expand=True, pady=(10, 0))
         
-        analisa_text = scrolledtext.ScrolledText(ai_frame, height=6, font=("Segoe UI", 10), bg="#fcfcfc")
+        analisa_text = scrolledtext.ScrolledText(ai_frame, height=5, font=("Segoe UI", 10), bg="#fcfcfc")
         analisa_text.pack(fill="both", expand=True)
         if data.get("analisa"): analisa_text.insert("1.0", data.get("analisa"))
 
@@ -188,41 +231,76 @@ class App(tk.Tk):
                 analisa_text.delete("1.0", tk.END)
                 analisa_text.insert("1.0", res)
 
-        ttk.Button(ai_frame, text="✨ Generate Analisa Otomatis", style="Action.TButton", command=run_ai).pack(pady=10)
+        ttk.Button(ai_frame, text="✨ Generate Analisa Otomatis", style="Action.TButton", command=run_ai).pack(pady=5)
 
         # Logic Visibility
         def toggle_view(*args):
-            if tipe_var.get() == "1":
-                self.isi_a_text.pack_forget()
+            # Reset view
+            modul_frame.grid_forget()
+            langkah_toolbar.pack_forget()
+            self.isi_a_text.pack_forget()
+            self.kode_container.pack_forget()
+
+            if tipe_var.get() == "1": # Source Code
                 self.kode_container.pack(fill="both", expand=True)
-            else:
-                self.kode_container.pack_forget()
+            else: # Langkah Deskriptif
+                modul_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(10, 0))
+                langkah_toolbar.pack(anchor="w")
                 self.isi_a_text.pack(fill="both", expand=True)
 
         tipe_var.trace_add("write", toggle_view)
         toggle_view()
         self._refresh_dialog_lists()
 
-        # Final Actions
-        res_val = {"data": None}
-        def save():
-            res_val["data"] = {
-                "judul_sub_bab": judul_var.get(),
-                "tipe": tipe_var.get(),
-                "isi_a": self.isi_a_text.get("1.0", "end-1c"),
-                "kode_files": self.kode_items,
-                "gambar_paths": self.gambar_items,
-                "analisa": analisa_text.get("1.0", "end-1c")
-            }
-            dialog.destroy()
-
-        btn_row = ttk.Frame(container)
-        btn_row.pack(fill="x", pady=(20, 0))
-        ttk.Button(btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save).pack(side="right", padx=5)
-        ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
-
         self.wait_window(dialog)
         return res_val["data"]
+
+    def _browse_modul(self):
+        path = filedialog.askopenfilename(
+            title="Pilih File Modul",
+            filetypes=[("Dokumen", "*.pdf;*.docx")],
+        )
+        if path:
+            self.modul_path_var.set(path)
+
+    def _load_modul_text(self):
+        path = self.modul_path_var.get().strip()
+        if not path:
+            messagebox.showwarning("Validasi", "Path file modul belum diisi.")
+            return
+        text = self.analysis_service.read_modul_text(path)
+        if not text:
+            messagebox.showwarning("Modul", "Modul kosong atau gagal dibaca.")
+            return
+        self.modul_text_cache = text
+        self.modul_loaded_path = path
+        messagebox.showinfo("Modul", f"Modul berhasil dimuat ({len(text)} karakter).")
+
+    def _run_langkah_ai(self, judul_var, target_widget):
+        judul = judul_var.get().strip()
+        if not judul:
+            messagebox.showwarning("Validasi", "Judul sub-bab belum diisi.")
+            return
+
+        modul_path = self.modul_path_var.get().strip()
+        if modul_path and modul_path != self.modul_loaded_path:
+            self._load_modul_text()
+
+        image_path = self.gambar_items[0]["path"] if self.gambar_items else None
+        if not self.modul_text_cache and not image_path:
+            image_path = filedialog.askopenfilename(
+                title="Pilih Screenshot",
+                filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")],
+            )
+
+        res, err = self.analysis_service.generate_langkah_kerja(
+            judul, self.modul_text_cache, image_path
+        )
+        if err:
+            messagebox.showerror("AI Error", err)
+            return
+        target_widget.delete("1.0", tk.END)
+        target_widget.insert("1.0", res)
 
     # --- Helper Logic untuk Dialog ---
 
