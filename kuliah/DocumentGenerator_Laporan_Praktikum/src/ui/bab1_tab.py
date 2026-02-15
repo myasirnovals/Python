@@ -101,7 +101,7 @@ class Bab1Tab(ttk.Frame):
 
     def _open_bab1_dialog(self, initial=None):
         dialog = tk.Toplevel(self)
-        dialog.title("Editor Langkah Kerja")
+        dialog.title("Editor Hasil Praktikum")
         dialog.geometry("950x850")
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
