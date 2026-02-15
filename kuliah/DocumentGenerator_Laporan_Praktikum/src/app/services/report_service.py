@@ -111,6 +111,7 @@ class ReportService:
         daftar_tugas = []
         counter_gbr_bab2 = 1
         for item in bab2_items:
+            tipe = item.get("tipe", "1")
             list_gbr_tgs = []
             for g in item.get("gambar_paths", []):
                 obj = muat_gambar(doc, g.get("path", ""))
@@ -125,11 +126,63 @@ class ReportService:
                 )
                 counter_gbr_bab2 += 1
 
+            list_kode_final = []
+            if tipe == "1":
+                kode_items = item.get("kode_files", [])
+                if len(kode_items) > 0:
+                    for i, d in enumerate(kode_items, 1):
+                        if len(kode_items) > 1:
+                            prefix = "\n" if i > 1 else ""
+                            judul_tampil = RichText(f"{prefix}{i}. {d.get('nama', '')}")
+                        else:
+                            judul_tampil = "##HAPUS##"
+                        list_kode_final.append(
+                            {"judul": judul_tampil, "isi": d.get("isi", "")}
+                        )
+
+            qa_list = item.get("qa_list", [])
+            qa_questions = []
+            qa_answers = []
+            for i, qa in enumerate(qa_list, 1):
+                q_text = (qa.get("q") or "").strip()
+                a_text = (qa.get("a") or "").strip()
+                if q_text:
+                    qa_questions.append(f"{i}. {q_text}")
+                if a_text:
+                    qa_answers.append(f"{i}. {a_text}")
+
+            isi_a = item.get("isi_a", "")
+            analisa = item.get("analisa", "")
+            if tipe == "3":
+                isi_soal = "\n".join(qa_questions)
+                isi_jawaban = "\n".join(qa_answers)
+                label_point_a = "Pertanyaan & Jawaban"
+                isi_point_a = "\n".join(qa_questions)
+                isi_analisa = ""
+            elif tipe == "2":
+                isi_soal = isi_a
+                isi_jawaban = analisa
+                label_point_a = "Langkah Kerja"
+                isi_point_a = isi_a
+                isi_analisa = analisa
+            else:
+                isi_soal = ""
+                isi_jawaban = analisa
+                label_point_a = "Source Code"
+                isi_point_a = ""
+                isi_analisa = analisa
+
             daftar_tugas.append(
                 {
                     "judul_sub_bab": item.get("judul_sub_bab", ""),
-                    "isi_soal": item.get("isi_soal", ""),
-                    "isi_jawaban": item.get("isi_jawaban", ""),
+                    "tipe": tipe,
+                    "label_point_a": label_point_a,
+                    "isi_point_a": isi_point_a,
+                    "list_kode": list_kode_final,
+                    "isi_analisa": isi_analisa,
+                    "qa_list": qa_list,
+                    "isi_soal": isi_soal,
+                    "isi_jawaban": isi_jawaban,
                     "ada_gambar": len(list_gbr_tgs) > 0,
                     "list_gambar": list_gbr_tgs,
                 }

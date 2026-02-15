@@ -78,6 +78,59 @@ class AnalysisService:
         return "\n".join(list_bernomor) + "\n"
 
     @staticmethod
+    def _safe_text(text, max_len=800):
+        if not text:
+            return ""
+        cleaned = str(text).strip()
+        if len(cleaned) <= max_len:
+            return cleaned
+        return cleaned[:max_len].rstrip() + "..."
+
+    @staticmethod
+    def _format_kode_names(kode_items):
+        names = []
+        for item in kode_items or []:
+            name = (item.get("nama") or "").strip()
+            if name:
+                names.append(name)
+        return ", ".join(names)
+
+    def _format_bab_items(self, bab_items, label):
+        lines = [f"{label}: {len(bab_items)} item"]
+        for idx, item in enumerate(bab_items, 1):
+            judul = (item.get("judul_sub_bab") or "").strip()
+            tipe = (item.get("tipe") or "").strip()
+            header = f"{idx}. {judul}" if judul else f"{idx}. (tanpa judul)"
+            if tipe:
+                header += f" (tipe {tipe})"
+            lines.append(header)
+
+            if tipe == "1":
+                kode_names = self._format_kode_names(item.get("kode_files", []))
+                if kode_names:
+                    lines.append(f"- kode: {kode_names}")
+            if tipe == "2":
+                isi = self._safe_text(item.get("isi_a", ""))
+                if isi:
+                    lines.append(f"- isi: {isi}")
+            if tipe == "3":
+                qa_list = item.get("qa_list", [])
+                qa_parts = []
+                for q_idx, qa in enumerate(qa_list, 1):
+                    q = self._safe_text(qa.get("q", ""), 200)
+                    a = self._safe_text(qa.get("a", ""), 200)
+                    if q or a:
+                        qa_parts.append(f"{q_idx}) Q: {q} | A: {a}")
+                if qa_parts:
+                    lines.append("- qa: " + " ; ".join(qa_parts))
+
+            analisa = self._safe_text(item.get("analisa", ""), 400)
+            if analisa:
+                lines.append(f"- analisa: {analisa}")
+
+        return "\n".join(lines)
+
+    @staticmethod
     def _instruksi_kualitas_langkah():
         return (
             "\n"
@@ -142,4 +195,53 @@ class AnalysisService:
             result = result.replace("\n\n", "\n")
             result = "\t" + result.replace("\n", "\n\t")
 
+        return result, None
+
+    def answer_question(self, question, modul_text):
+        if not self.ensure_ready():
+            return None, "AI tidak bisa connect. Periksa API key."
+        if not question or not question.strip():
+            return "", None
+        if not modul_text or not modul_text.strip():
+            return None, "Referensi modul kosong."
+
+        prompt = (
+            "Peran: Asisten lab komputer.\n"
+            "Tugas: Jawab pertanyaan berdasarkan modul berikut.\n\n"
+            f"MODUL:\n{modul_text}\n\n"
+            f"PERTANYAAN:\n{question}\n\n"
+            "Instruksi:\n"
+            "1. Jawab singkat dan jelas (2-4 kalimat).\n"
+            "2. Jangan membuat informasi di luar modul.\n"
+            "3. Gunakan Bahasa Indonesia formal.\n"
+        )
+
+        result = self.ai_client.ask(prompt)
+        if not result or "Gagal" in result:
+            return None, "AI tidak bisa menjawab."
+        return result, None
+
+    def generate_conclusion(self, bab1_items, bab2_items):
+        if not self.ensure_ready():
+            return None, "AI tidak bisa connect. Periksa API key."
+
+        bab1_text = self._format_bab_items(bab1_items, "BAB 1")
+        bab2_text = self._format_bab_items(bab2_items, "BAB 2")
+
+        prompt = (
+            "Peran: Asisten penyusun laporan praktikum.\n"
+            "Tugas: Buat kesimpulan laporan berdasarkan ringkasan berikut.\n\n"
+            f"{bab1_text}\n\n"
+            f"{bab2_text}\n\n"
+            "Instruksi:\n"
+            "1. Tulis tepat 3 paragraf.\n"
+            "2. Tiap paragraf 5-10 kalimat.\n"
+            "3. Gunakan Bahasa Indonesia formal dan akademis.\n"
+            "4. Fokus pada tujuan, hasil, kendala, dan pembelajaran.\n"
+            "5. Jangan gunakan tanda kutip atau backtick.\n"
+        )
+
+        result = self.ai_client.ask(prompt)
+        if not result or "Gagal" in result:
+            return None, "AI tidak bisa menjawab."
         return result, None
