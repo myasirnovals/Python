@@ -102,7 +102,10 @@ class Bab1Tab(ttk.Frame):
     def _open_bab1_dialog(self, initial=None):
         dialog = tk.Toplevel(self)
         dialog.title("Editor Hasil Praktikum")
-        dialog.geometry("950x850")
+        
+        # IMK: Mengurangi tinggi jendela, menambah lebar untuk side-by-side
+        # Ukuran lebih bersahabat untuk layar laptop (1366x768 atau 1920x1080)
+        dialog.geometry("1000x650") 
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
         dialog.grab_set()
@@ -111,11 +114,10 @@ class Bab1Tab(ttk.Frame):
         tipe_var = tk.StringVar(value=data.get("tipe", "1"))
         judul_var = tk.StringVar(value=data.get("judul_sub_bab", ""))
 
+        # --- FOOTER NAVIGATION (Simpan/Batal) ---
         btn_row = ttk.Frame(dialog, padding=(20, 10))
         btn_row.pack(side="bottom", fill="x")
-        ttk.Separator(dialog, orient="horizontal").pack(
-            side="bottom", fill="x", padx=20
-        )
+        ttk.Separator(dialog, orient="horizontal").pack(side="bottom", fill="x")
 
         res_val = {"data": None}
 
@@ -130,143 +132,96 @@ class Bab1Tab(ttk.Frame):
             }
             dialog.destroy()
 
-        ttk.Button(
-            btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save
-        ).pack(side="right", padx=5)
+        ttk.Button(btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save).pack(side="right", padx=5)
         ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
 
-        container = ttk.Frame(dialog, padding=20)
-        container.pack(side="top", fill="both", expand=True)
+        # --- MAIN BODY SPLIT VIEW ---
+        main_container = ttk.Frame(dialog, padding=15)
+        main_container.pack(fill="both", expand=True)
 
-        info_frame = ttk.LabelFrame(container, text=" Informasi Dasar ", padding=15)
-        info_frame.pack(fill="x", pady=(0, 15))
+        # Bagian Kiri: Input Pengguna
+        left_pane = ttk.Frame(main_container)
+        left_pane.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
-        ttk.Label(info_frame, text="Judul Sub-Bab:").grid(row=0, column=0, sticky="w")
-        ttk.Entry(info_frame, textvariable=judul_var, width=70).grid(
-            row=0, column=1, padx=10, sticky="ew"
-        )
+        # Bagian Kanan: Output AI (Monitor Real-time)
+        right_pane = ttk.Frame(main_container)
+        right_pane.pack(side="right", fill="both", expand=True, padx=(10, 0))
 
-        type_choice_frame = ttk.Frame(info_frame)
-        type_choice_frame.grid(row=1, column=1, sticky="w", pady=(10, 0))
-        ttk.Label(info_frame, text="Tipe Konten:").grid(
-            row=1, column=0, sticky="w", pady=(10, 0)
-        )
-        ttk.Radiobutton(
-            type_choice_frame, text="Source Code", variable=tipe_var, value="1"
-        ).pack(side="left")
-        ttk.Radiobutton(
-            type_choice_frame, text="Langkah Deskriptif", variable=tipe_var, value="2"
-        ).pack(side="left", padx=20)
+        # --- LEFT PANE CONTENT ---
+        # 1. Informasi Dasar
+        info_frame = ttk.LabelFrame(left_pane, text=" Konfigurasi ", padding=10)
+        info_frame.pack(fill="x", pady=(0, 10))
 
-        modul_frame = ttk.Frame(info_frame)
-        ttk.Label(modul_frame, text="File Modul:").pack(side="left")
-        ttk.Entry(modul_frame, textvariable=self.modul_path_var, width=50).pack(
-            side="left", padx=10
-        )
-        ttk.Button(modul_frame, text="Browse", command=self._browse_modul).pack(
-            side="left", padx=2
-        )
-        ttk.Button(modul_frame, text="Muat", command=self._load_modul_text).pack(
-            side="left"
-        )
+        ttk.Label(info_frame, text="Judul Sub-Bab:").pack(anchor="w")
+        ttk.Entry(info_frame, textvariable=judul_var).pack(fill="x", pady=(2, 8))
 
-        content_frame = ttk.LabelFrame(container, text=" Isi & Dokumentasi ", padding=15)
-        content_frame.pack(fill="both", expand=True)
+        type_frame = ttk.Frame(info_frame)
+        type_frame.pack(fill="x")
+        ttk.Label(type_frame, text="Tipe:").pack(side="left")
+        ttk.Radiobutton(type_frame, text="Code", variable=tipe_var, value="1").pack(side="left", padx=10)
+        ttk.Radiobutton(type_frame, text="Deskriptif", variable=tipe_var, value="2").pack(side="left")
 
-        self.isi_a_text = scrolledtext.ScrolledText(
-            content_frame, height=6, font=("Segoe UI", 10)
-        )
-        if data.get("isi_a"):
-            self.isi_a_text.insert("1.0", data.get("isi_a"))
+        # 2. Input Area (Dinamis)
+        self.input_container = ttk.LabelFrame(left_pane, text=" Input Data ", padding=10)
+        self.input_container.pack(fill="both", expand=True)
 
-        langkah_toolbar = ttk.Frame(content_frame)
-        ttk.Button(
-            langkah_toolbar,
-            text="✨ Generate Langkah Kerja (AI)",
-            style="Action.TButton",
-            command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text),
-        ).pack(side="left", pady=(0, 5))
-
-        self.kode_items = data.get("kode_files", [])
-        self.kode_container = ttk.Frame(content_frame)
-        self.kode_listbox = tk.Listbox(
-            self.kode_container, height=6, font=("Consolas", 10)
-        )
+        # Widget untuk Source Code
+        self.kode_container = ttk.Frame(self.input_container)
+        self.kode_listbox = tk.Listbox(self.kode_container, height=8, font=("Consolas", 9))
         self.kode_listbox.pack(side="left", fill="both", expand=True)
-
         k_btns = ttk.Frame(self.kode_container)
-        k_btns.pack(side="right", padx=(10, 0))
-        ttk.Button(k_btns, text="Tambah Kode", command=self._add_kode_logic).pack(
-            fill="x", pady=2
-        )
-        ttk.Button(k_btns, text="Hapus", command=self._remove_kode_logic).pack(
-            fill="x"
-        )
+        k_btns.pack(side="right", padx=(5, 0))
+        ttk.Button(k_btns, text="+ Kode", width=8, command=self._add_kode_logic).pack(pady=2)
+        ttk.Button(k_btns, text="Hapus", width=8, command=self._remove_kode_logic).pack()
 
-        img_label = ttk.Label(
-            content_frame, text="Lampiran Gambar:", style="Subheader.TLabel"
-        )
-        img_label.pack(anchor="w", pady=(10, 5))
+        # Widget untuk Deskriptif (AI Assistance)
+        self.desc_container = ttk.Frame(self.input_container)
+        self.isi_a_text = scrolledtext.ScrolledText(self.desc_container, height=8, font=("Segoe UI", 10))
+        self.isi_a_text.pack(fill="both", expand=True)
+        ttk.Button(self.desc_container, text="✨ Generate Langkah Kerja", command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(fill="x", pady=5)
 
-        self.gambar_items = data.get("gambar_paths", [])
-        img_main = ttk.Frame(content_frame)
-        img_main.pack(fill="x")
-
-        self.gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
+        # 3. Dokumentasi Gambar (Selalu ada di bawah)
+        img_frame = ttk.LabelFrame(left_pane, text=" Lampiran Gambar ", padding=10)
+        img_frame.pack(fill="x", pady=(10, 0))
+        self.gambar_listbox = tk.Listbox(img_frame, height=3, font=("Segoe UI", 9))
         self.gambar_listbox.pack(side="left", fill="both", expand=True)
+        g_btns = ttk.Frame(img_frame)
+        g_btns.pack(side="right", padx=(5, 0))
+        ttk.Button(g_btns, text="+ Gbr", width=8, command=self._add_gambar_logic).pack(pady=2)
+        ttk.Button(g_btns, text="Hapus", width=8, command=self._remove_gambar_logic).pack()
 
-        g_btns = ttk.Frame(img_main)
-        g_btns.pack(side="right", padx=(10, 0))
-        ttk.Button(g_btns, text="+ Gambar", command=self._add_gambar_logic).pack(
-            fill="x", pady=2
-        )
-        ttk.Button(g_btns, text="Hapus", command=self._remove_gambar_logic).pack(
-            fill="x"
-        )
+        # --- RIGHT PANE CONTENT (Analisa AI) ---
+        ai_frame = ttk.LabelFrame(right_pane, text=" Hasil Analisa AI ", padding=10)
+        ai_frame.pack(fill="both", expand=True)
 
-        ai_frame = ttk.LabelFrame(container, text=" Analisa Hasil (AI) ", padding=15)
-        ai_frame.pack(fill="both", expand=True, pady=(10, 0))
-
-        analisa_text = scrolledtext.ScrolledText(
-            ai_frame, height=5, font=("Segoe UI", 10), bg="#fcfcfc"
-        )
-        analisa_text.pack(fill="both", expand=True)
+        analisa_text = scrolledtext.ScrolledText(ai_frame, font=("Segoe UI", 10), bg="#ffffff")
+        analisa_text.pack(fill="both", expand=True, pady=(0, 10))
         if data.get("analisa"):
             analisa_text.insert("1.0", data.get("analisa"))
 
         def run_ai():
+            # (Logika bisnis tetap sama)
             res, err = self.app.analysis_service.generate_analysis(
-                tipe_var.get(),
-                self.isi_a_text.get("1.0", tk.END),
-                self.kode_items,
-                self.gambar_items,
-                self.app.cover_tab.get_template_choice(),
+                tipe_var.get(), self.isi_a_text.get("1.0", tk.END),
+                self.kode_items, self.gambar_items, self.app.cover_tab.get_template_choice(),
             )
-            if err:
-                messagebox.showerror("AI Error", err)
+            if err: messagebox.showerror("AI Error", err)
             else:
                 analisa_text.delete("1.0", tk.END)
                 analisa_text.insert("1.0", res)
 
-        ttk.Button(
-            ai_frame,
-            text="✨ Generate Analisa Otomatis",
-            style="Action.TButton",
-            command=run_ai,
-        ).pack(pady=5)
+        ttk.Button(ai_frame, text="🚀 Generate Analisa Otomatis", style="Action.TButton", command=run_ai).pack(fill="x")
 
+        # --- LOGIKA TAMPILAN (UI LOGIC) ---
         def toggle_view(*args):
-            modul_frame.grid_forget()
-            langkah_toolbar.pack_forget()
-            self.isi_a_text.pack_forget()
+            # IMK: Mengurangi beban kognitif dengan menyembunyikan input yang tidak relevan
             self.kode_container.pack_forget()
-
+            self.desc_container.pack_forget()
+            
             if tipe_var.get() == "1":
                 self.kode_container.pack(fill="both", expand=True)
             else:
-                modul_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(10, 0))
-                langkah_toolbar.pack(anchor="w")
-                self.isi_a_text.pack(fill="both", expand=True)
+                self.desc_container.pack(fill="both", expand=True)
 
         tipe_var.trace_add("write", toggle_view)
         toggle_view()
