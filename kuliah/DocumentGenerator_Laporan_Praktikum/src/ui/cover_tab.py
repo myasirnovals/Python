@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 
-
 class CoverTab(ttk.Frame):
     def __init__(self, app, parent):
-        super().__init__(parent, padding=30)
+        # Padding luar 20
+        super().__init__(parent, padding=20) 
         self.app = app
         self.cover_vars = {
             "mata_kuliah": tk.StringVar(),
@@ -20,46 +20,59 @@ class CoverTab(ttk.Frame):
     def _build(self):
         self.pack(fill="both", expand=True)
 
+        # --- GROUP 1: INFORMASI PRAKTIKUM ---
         group1 = ttk.LabelFrame(self, text=" Informasi Praktikum ", padding=15)
-        group1.pack(fill="x", pady=(0, 20))
+        group1.pack(fill="x", pady=(0, 15)) 
+        group1.columnconfigure(1, weight=1)
 
-        fields1 = [
-            ("Mata Kuliah", "mata_kuliah"),
-            ("Nomor Modul", "nomor_modul"),
-            ("Judul Modul", "judul"),
-        ]
-
+        fields1 = [("Mata Kuliah", "mata_kuliah"), ("Nomor Modul", "nomor_modul"), ("Judul Modul", "judul")]
         for i, (label, key) in enumerate(fields1):
-            ttk.Label(group1, text=label).grid(row=i, column=0, sticky="w", pady=8, padx=5)
-            ttk.Entry(group1, textvariable=self.cover_vars[key], width=50).grid(
-                row=i, column=1, sticky="ew", pady=8
-            )
+            ttk.Label(group1, text=label).grid(row=i, column=0, sticky="w", pady=8, padx=(0, 15))
+            ttk.Entry(group1, textvariable=self.cover_vars[key]).grid(row=i, column=1, sticky="ew", pady=8)
 
+        # --- GROUP 2: IDENTITAS MAHASISWA ---
         group2 = ttk.LabelFrame(self, text=" Identitas Mahasiswa ", padding=15)
-        group2.pack(fill="x", pady=(0, 20))
+        group2.pack(fill="x", pady=(0, 15)) 
+        group2.columnconfigure(1, weight=1)
 
-        fields2 = [
-            ("Nama Lengkap", "nama"),
-            ("NIM", "nim"),
-            ("Tahun Akademik", "tahun"),
-        ]
-
+        fields2 = [("Nama Lengkap", "nama"), ("NIM", "nim"), ("Tahun Akademik", "tahun")]
         for i, (label, key) in enumerate(fields2):
-            ttk.Label(group2, text=label).grid(row=i, column=0, sticky="w", pady=8, padx=5)
-            ttk.Entry(group2, textvariable=self.cover_vars[key], width=50).grid(
-                row=i, column=1, sticky="ew", pady=8
-            )
+            ttk.Label(group2, text=label).grid(row=i, column=0, sticky="w", pady=8, padx=(0, 15))
+            ttk.Entry(group2, textvariable=self.cover_vars[key]).grid(row=i, column=1, sticky="ew", pady=8)
 
-        group3 = ttk.LabelFrame(self, text=" Pengaturan Dokumen ", padding=15)
-        group3.pack(fill="x")
+        # --- GROUP 3: PENGATURAN DOKUMEN (CENTERED FIX) ---
+        # Kita gunakan padding yang seimbang (20px semua sisi)
+        group3 = ttk.LabelFrame(self, text=" Pengaturan Dokumen ", padding=20)
+        group3.pack(fill="x", pady=(0, 5)) 
+        
+        # KONFIGURASI AGAR PRESISI DI TENGAH
+        group3.columnconfigure(1, weight=1)
+        group3.columnconfigure(2, weight=1)
+        # Baris 0 kita set weight=1 agar ia mengambil ruang vertikal yang tersedia & memusatkan isinya
+        group3.rowconfigure(0, weight=1) 
 
-        ttk.Label(group3, text="Pilih Gaya Laporan:").pack(side="left", padx=5)
+        # Catatan: Saya HAPUS 'pady' pada widget di bawah ini.
+        # Kita serahkan pengaturan jarak sepenuhnya pada padding frame (group3) 
+        # supaya posisinya benar-benar di tengah (center gravity).
+
+        # Label
+        ttk.Label(group3, text="Pilih Gaya Laporan:").grid(
+            row=0, column=0, sticky="w", padx=(0, 10) # pady dihapus
+        )
+        
+        # Radio Button 1
         ttk.Radiobutton(
             group3, text="Gaya Rapat (V1)", variable=self.template_choice, value="1"
-        ).pack(side="left", padx=15)
+        ).grid(
+            row=0, column=1, sticky="w", padx=5 # pady dihapus
+        )
+        
+        # Radio Button 2
         ttk.Radiobutton(
             group3, text="Gaya Renggang (V2)", variable=self.template_choice, value="2"
-        ).pack(side="left")
+        ).grid(
+            row=0, column=2, sticky="w", padx=5 # pady dihapus
+        )
 
     def get_cover_data(self):
         return {key: var.get().strip() for key, var in self.cover_vars.items()}

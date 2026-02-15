@@ -1,0 +1,5 @@
+requests
+pywin32; platform_system == "Windows"
+PyPDF2
+python-docx
+docxtpl

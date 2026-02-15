@@ -20,7 +20,22 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Lab Report Generator Pro")
-        self.geometry("1080x800")
+
+        # --- UPDATE UKURAN (FINAL) ---
+        # Lebar: 950
+        # Tinggi: 630 (Naik dikit dari 600 biar ada napas di bawah)
+        target_width = 950
+        target_height = 630 
+
+        screen_w = self.winfo_screenwidth()
+        screen_h = self.winfo_screenheight()
+
+        x_pos = (screen_w - target_width) // 2
+        y_pos = (screen_h - target_height) // 2
+
+        self.geometry(f"{target_width}x{target_height}+{x_pos}+{y_pos}")
+        self.minsize(800, 550)
+        # -----------------------------
 
         setup_styles(self)
 
@@ -39,11 +54,12 @@ class App(tk.Tk):
     def _build_ui(self):
         self.configure(bg="#f8f9fa")
 
+        # Padding 15 tetap, nanti akan terlihat pas dengan tinggi 630
         main_container = ttk.Frame(self)
-        main_container.pack(fill="both", expand=True, padx=25, pady=25)
+        main_container.pack(fill="both", expand=True, padx=15, pady=15)
 
         header_frame = ttk.Frame(main_container)
-        header_frame.pack(fill="x", pady=(0, 20))
+        header_frame.pack(fill="x", pady=(0, 10))
         ttk.Label(header_frame, text="Lab Report Generator", style="Header.TLabel").pack(
             side="left"
         )
