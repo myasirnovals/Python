@@ -102,16 +102,19 @@ class Bab2Tab(ttk.Frame):
     def _open_bab2_dialog(self, initial=None):
         dialog = tk.Toplevel(self)
         dialog.title("Editor Tugas Praktikum")
-        dialog.geometry("950x850")
+        dialog.geometry("1000x850")
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
         dialog.grab_set()
 
         data = initial.copy() if initial else {}
-        # Nilai tipe: "1" (Source Code), "2" (Deskriptif), "3" (Pertanyaan & Jawaban)
         tipe_var = tk.StringVar(value=data.get("tipe", "1"))
         judul_var = tk.StringVar(value=data.get("judul_sub_bab", ""))
+        
+        self.qa_rows = [] 
+        qa_initial_data = data.get("qa_list", [])
 
+        # --- 1. FOOTER BUTTONS ---
         btn_row = ttk.Frame(dialog, padding=(20, 10))
         btn_row.pack(side="bottom", fill="x")
         ttk.Separator(dialog, orient="horizontal").pack(side="bottom", fill="x", padx=20)
@@ -119,15 +122,22 @@ class Bab2Tab(ttk.Frame):
         res_val = {"data": None}
 
         def save():
+            qa_list_final = []
+            if tipe_var.get() == "3":
+                for row in self.qa_rows:
+                    q = row['q_entry'].get("1.0", "end-1c").strip()
+                    a = row['a_entry'].get("1.0", "end-1c").strip()
+                    if q or a:
+                        qa_list_final.append({"q": q, "a": a})
+
             res_val["data"] = {
                 "judul_sub_bab": judul_var.get(),
                 "tipe": tipe_var.get(),
-                "isi_a": self.isi_a_text.get("1.0", "end-1c"), # Untuk Deskriptif
-                "isi_soal": self.soal_text.get("1.0", "end-1c"), # Untuk P&J
-                "isi_jawaban": self.jawab_text.get("1.0", "end-1c"), # Untuk P&J
+                "isi_a": self.isi_a_text.get("1.0", "end-1c"),
+                "qa_list": qa_list_final,
                 "kode_files": self.kode_items,
                 "gambar_paths": self.gambar_items,
-                "analisa": analisa_text.get("1.0", "end-1c"),
+                "analisa": analisa_text.get("1.0", "end-1c") if tipe_var.get() != "3" else ""
             }
             dialog.destroy()
 
@@ -137,14 +147,13 @@ class Bab2Tab(ttk.Frame):
         container = ttk.Frame(dialog, padding=20)
         container.pack(side="top", fill="both", expand=True)
 
-        # --- SEKSI: INFORMASI DASAR ---
+        # --- 2. SEKSI: INFORMASI DASAR ---
         info_frame = ttk.LabelFrame(container, text=" Informasi Dasar ", padding=15)
         info_frame.pack(fill="x", pady=(0, 15))
 
         ttk.Label(info_frame, text="Topik Tugas:").grid(row=0, column=0, sticky="w")
         ttk.Entry(info_frame, textvariable=judul_var, width=70).grid(row=0, column=1, padx=10, sticky="ew")
 
-        # Update Radio Buttons (Tambah opsi Pertanyaan & Jawaban)
         type_choice_frame = ttk.Frame(info_frame)
         type_choice_frame.grid(row=1, column=1, sticky="w", pady=(10, 0))
         ttk.Label(info_frame, text="Tipe Konten:").grid(row=1, column=0, sticky="w", pady=(10, 0))
@@ -159,19 +168,17 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(modul_frame, text="Browse", command=self._browse_modul).pack(side="left", padx=2)
         ttk.Button(modul_frame, text="Muat", command=self._load_modul_text).pack(side="left")
 
-        # --- SEKSI: ISI & DOKUMENTASI ---
+        # --- 3. SEKSI: ISI & DOKUMENTASI ---
         content_frame = ttk.LabelFrame(container, text=" Isi & Dokumentasi ", padding=15)
         content_frame.pack(fill="both", expand=True)
 
-        # 1. Editor Deskriptif
+        # A. Editor Deskriptif & Source Code
         self.isi_a_text = scrolledtext.ScrolledText(content_frame, height=6, font=("Segoe UI", 10))
         if data.get("isi_a"): self.isi_a_text.insert("1.0", data.get("isi_a"))
-
         langkah_toolbar = ttk.Frame(content_frame)
         ttk.Button(langkah_toolbar, text="✨ Generate Langkah Kerja (AI)", style="Action.TButton",
                    command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(side="left", pady=(0, 5))
 
-        # 2. Editor Source Code
         self.kode_items = data.get("kode_files", [])
         self.kode_container = ttk.Frame(content_frame)
         self.kode_listbox = tk.Listbox(self.kode_container, height=6, font=("Consolas", 10))
@@ -181,41 +188,96 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(k_btns, text="Tambah Kode", command=self._add_kode_logic).pack(fill="x", pady=2)
         ttk.Button(k_btns, text="Hapus", command=self._remove_kode_logic).pack(fill="x")
 
-        # 3. Editor Pertanyaan & Jawaban (Baru)
-        self.qa_container = ttk.Frame(content_frame)
-        ttk.Label(self.qa_container, text="Pertanyaan:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
-        self.soal_text = scrolledtext.ScrolledText(self.qa_container, height=4, font=("Segoe UI", 10))
-        self.soal_text.pack(fill="x", pady=(0, 10))
-        if data.get("isi_soal"): self.soal_text.insert("1.0", data.get("isi_soal"))
+        # B. TABEL PERTANYAAN & JAWABAN
+        self.qa_table_container = ttk.Frame(content_frame)
+        
+        header_table = ttk.Frame(self.qa_table_container)
+        header_table.pack(fill="x", pady=(0, 5))
+        ttk.Label(header_table, text="No", width=5, anchor="center").grid(row=0, column=0)
+        ttk.Label(header_table, text="Pertanyaan", width=40).grid(row=0, column=1, padx=5)
+        ttk.Label(header_table, text="Jawaban (Manual/AI)", width=45).grid(row=0, column=2, padx=5)
+        ttk.Label(header_table, text="Aksi", width=10).grid(row=0, column=3)
 
-        ttk.Label(self.qa_container, text="Jawaban:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
-        self.jawab_text = scrolledtext.ScrolledText(self.qa_container, height=5, font=("Segoe UI", 10))
-        self.jawab_text.pack(fill="x")
-        if data.get("isi_jawaban"): self.jawab_text.insert("1.0", data.get("isi_jawaban"))
+        canvas = tk.Canvas(self.qa_table_container, highlightthickness=0, height=350) # Tinggi diperbesar
+        scrollbar = ttk.Scrollbar(self.qa_table_container, orient="vertical", command=canvas.yview)
+        self.scrollable_table_frame = ttk.Frame(canvas)
 
-        # Area Gambar (Global)
-        img_label = ttk.Label(content_frame, text="Lampiran Gambar:", style="Subheader.TLabel")
-        img_label.pack(anchor="w", pady=(10, 5))
+        self.scrollable_table_frame.bind(
+            "<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=self.scrollable_table_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side="top", fill="both", expand=True) # Berada di atas toolbar
+        scrollbar.pack(side="right", fill="y")
+
+        def add_qa_row(q_val="", a_val=""):
+            row_idx = len(self.qa_rows)
+            row_frame = ttk.Frame(self.scrollable_table_frame)
+            row_frame.pack(fill="x", pady=2)
+
+            lbl_no = ttk.Label(row_frame, text=str(row_idx + 1), width=5, anchor="center")
+            lbl_no.grid(row=0, column=0)
+
+            q_ent = tk.Text(row_frame, height=3, width=35, font=("Segoe UI", 9))
+            q_ent.insert("1.0", q_val)
+            q_ent.grid(row=0, column=1, padx=5)
+
+            a_ent = tk.Text(row_frame, height=3, width=40, font=("Segoe UI", 9))
+            a_ent.insert("1.0", a_val)
+            a_ent.grid(row=0, column=2, padx=5)
+
+            def remove_this_row(f=row_frame):
+                f.destroy()
+                self.qa_rows = [r for r in self.qa_rows if r['frame'] != f]
+                for i, r in enumerate(self.qa_rows):
+                    r['no_label'].config(text=str(i + 1))
+
+            ttk.Button(row_frame, text="Hapus", width=8, command=remove_this_row).grid(row=0, column=3, padx=5)
+
+            self.qa_rows.append({'frame': row_frame, 'no_label': lbl_no, 'q_entry': q_ent, 'a_entry': a_ent})
+
+        # TOOLBAR TABEL (Berada di bawah canvas)
+        table_toolbar = ttk.Frame(self.qa_table_container)
+        table_toolbar.pack(fill="x", pady=10)
+
+        def run_table_ai():
+            if not self.modul_text_cache:
+                messagebox.showwarning("AI", "Silakan muat file modul terlebih dahulu sebagai referensi jawaban.")
+                return
+            for row in self.qa_rows:
+                q_text = row['q_entry'].get("1.0", "end-1c").strip()
+                a_text = row['a_entry'].get("1.0", "end-1c").strip()
+                if q_text and not a_text:
+                    ans, err = self.app.analysis_service.answer_question(q_text, self.modul_text_cache)
+                    if not err: row['a_entry'].insert("1.0", ans)
+
+        ttk.Button(table_toolbar, text="+ Tambah Soal", command=lambda: add_qa_row()).pack(side="left", padx=5)
+        ttk.Button(table_toolbar, text="✨ Generate Jawaban Kosong (AI)", style="Action.TButton", command=run_table_ai).pack(side="left")
+
+        if qa_initial_data:
+            for item in qa_initial_data: add_qa_row(item['q'], item['a'])
+        else: add_qa_row()
+
+        # C. SEKSI: LAMPIRAN GAMBAR (Hanya untuk tipe 1 & 2)
+        self.img_label = ttk.Label(content_frame, text="Lampiran Gambar:", style="Subheader.TLabel")
         self.gambar_items = data.get("gambar_paths", [])
-        img_main = ttk.Frame(content_frame)
-        img_main.pack(fill="x")
-        self.gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
+        self.img_main = ttk.Frame(content_frame)
+        self.gambar_listbox = tk.Listbox(self.img_main, height=3, font=("Segoe UI", 9))
         self.gambar_listbox.pack(side="left", fill="both", expand=True)
-        g_btns = ttk.Frame(img_main)
+        g_btns = ttk.Frame(self.img_main)
         g_btns.pack(side="right", padx=(10, 0))
         ttk.Button(g_btns, text="+ Gambar", command=self._add_gambar_logic).pack(fill="x", pady=2)
         ttk.Button(g_btns, text="Hapus", command=self._remove_gambar_logic).pack(fill="x")
 
-        # --- SEKSI: ANALISA ---
+        # --- 4. SEKSI: ANALISA ---
         ai_frame = ttk.LabelFrame(container, text=" Analisa Hasil (AI) ", padding=15)
-        ai_frame.pack(fill="both", expand=True, pady=(10, 0))
         analisa_text = scrolledtext.ScrolledText(ai_frame, height=5, font=("Segoe UI", 10), bg="#fcfcfc")
         analisa_text.pack(fill="both", expand=True)
         if data.get("analisa"): analisa_text.insert("1.0", data.get("analisa"))
 
         def run_ai():
-            # Jika P&J dipilih, gunakan teks jawaban untuk dianalisa
-            teks_input = self.jawab_text.get("1.0", tk.END) if tipe_var.get() == "3" else self.isi_a_text.get("1.0", tk.END)
+            teks_input = self.isi_a_text.get("1.0", tk.END)
             res, err = self.app.analysis_service.generate_analysis(
                 tipe_var.get(), teks_input, self.kode_items, self.gambar_items, self.app.cover_tab.get_template_choice()
             )
@@ -226,23 +288,35 @@ class Bab2Tab(ttk.Frame):
 
         ttk.Button(ai_frame, text="✨ Generate Analisa Otomatis", style="Action.TButton", command=run_ai).pack(pady=5)
 
+        # --- 5. LOGIKA TOGGLE VIEW ---
         def toggle_view(*args):
+            # Sembunyikan semua field dulu
             modul_frame.grid_forget()
             langkah_toolbar.pack_forget()
             self.isi_a_text.pack_forget()
             self.kode_container.pack_forget()
-            self.qa_container.pack_forget()
+            self.qa_table_container.pack_forget()
+            self.img_label.pack_forget()
+            self.img_main.pack_forget()
+            ai_frame.pack_forget()
 
             val = tipe_var.get()
             if val == "1": # Source Code
                 self.kode_container.pack(fill="both", expand=True)
+                self.img_label.pack(anchor="w", pady=(10, 5))
+                self.img_main.pack(fill="x")
+                ai_frame.pack(fill="both", expand=True, pady=(10, 0))
             elif val == "2": # Langkah Deskriptif
                 modul_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(10, 0))
                 langkah_toolbar.pack(anchor="w")
                 self.isi_a_text.pack(fill="both", expand=True)
+                self.img_label.pack(anchor="w", pady=(10, 5))
+                self.img_main.pack(fill="x")
+                ai_frame.pack(fill="both", expand=True, pady=(10, 0))
             elif val == "3": # Pertanyaan & Jawaban
                 modul_frame.grid(row=2, column=0, columnspan=2, sticky="w", pady=(10, 0))
-                self.qa_container.pack(fill="both", expand=True)
+                self.qa_table_container.pack(fill="both", expand=True)
+                # "Lampiran Gambar" dan "Analisa" tidak di-pack di sini
 
         tipe_var.trace_add("write", toggle_view)
         toggle_view()
