@@ -103,8 +103,7 @@ class Bab2Tab(ttk.Frame):
         dialog = tk.Toplevel(self)
         dialog.title("Editor Tugas Praktikum")
         
-        # IMK: Ukuran yang lebih manis (Slightly Smaller)
-        # 1020x600 adalah 'sweet spot' untuk layar 14 inch ke atas
+        # Ukuran jendela tetap konsisten
         dialog.geometry("1020x600")
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
@@ -148,16 +147,17 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
 
         # --- BODY SPLIT VIEW ---
-        main_container = ttk.Frame(dialog, padding=12) # Padding sedikit dikurangi
+        main_container = ttk.Frame(dialog, padding=12)
         main_container.pack(fill="both", expand=True)
 
+        # Variabel lokal tanpa 'self' agar tidak menyebabkan AttributeError
         left_pane = ttk.Frame(main_container)
-        left_pane.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        left_pane.pack(side="left", fill="both", expand=True)
 
         right_pane = ttk.Frame(main_container)
-        right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
+        # right_pane akan di-pack secara dinamis di toggle_view
 
-        # --- LEFT PANE ---
+        # --- LEFT PANE CONTENT ---
         info_frame = ttk.LabelFrame(left_pane, text=" Konfigurasi Tugas ", padding=8)
         info_frame.pack(fill="x", pady=(0, 8))
 
@@ -176,10 +176,11 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(self.modul_frame, text="...", width=3, command=self._browse_modul).pack(side="left", padx=2)
         ttk.Button(self.modul_frame, text="Muat", width=5, command=self._load_modul_text).pack(side="left")
 
+        # Container Isi Konten (Mengikuti lebar left_pane)
         self.content_container = ttk.LabelFrame(left_pane, text=" Isi Konten ", padding=8)
         self.content_container.pack(fill="both", expand=True)
 
-        # 1. Source Code
+        # 1. Source Code View
         self.kode_container = ttk.Frame(self.content_container)
         self.kode_listbox = tk.Listbox(self.kode_container, height=6, font=("Consolas", 9))
         self.kode_listbox.pack(side="left", fill="both", expand=True)
@@ -188,51 +189,64 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(k_btns, text="+", width=3, command=self._add_kode_logic).pack(pady=2)
         ttk.Button(k_btns, text="-", width=3, command=self._remove_kode_logic).pack()
 
-        # 2. Deskriptif
+        # 2. Deskriptif View
         self.langkah_container = ttk.Frame(self.content_container)
         self.isi_a_text = scrolledtext.ScrolledText(self.langkah_container, height=6, font=("Segoe UI", 9))
         self.isi_a_text.pack(fill="both", expand=True)
         ttk.Button(self.langkah_container, text="✨ Generate Langkah (AI)", style="Action.TButton",
                    command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(fill="x", pady=(4,0))
 
-        # 3. Q&A Table (Optimasi Lebar Teks)
+        # 3. Q&A Table (Pelebaran Horizontal Maksimal)
         self.qa_table_container = ttk.Frame(self.content_container)
-        qa_canvas = tk.Canvas(self.qa_table_container, highlightthickness=0, height=220)
+        qa_canvas = tk.Canvas(self.qa_table_container, highlightthickness=0, height=220, bg="#f8f9fa")
         qa_scrollbar = ttk.Scrollbar(self.qa_table_container, orient="vertical", command=qa_canvas.yview)
+        
+        # Frame internal untuk baris Q&A
         self.scrollable_table_frame = ttk.Frame(qa_canvas)
+        canvas_frame_id = qa_canvas.create_window((0, 0), window=self.scrollable_table_frame, anchor="nw")
+
+        # Fungsi Sinkronisasi Lebar agar "Terangkat" ke kanan
+        def sync_width(event):
+            qa_canvas.itemconfig(canvas_frame_id, width=event.width)
+        
+        qa_canvas.bind("<Configure>", sync_width)
         self.scrollable_table_frame.bind("<Configure>", lambda e: qa_canvas.configure(scrollregion=qa_canvas.bbox("all")))
-        qa_canvas.create_window((0, 0), window=self.scrollable_table_frame, anchor="nw")
+
         qa_canvas.configure(yscrollcommand=qa_scrollbar.set)
         qa_canvas.pack(side="left", fill="both", expand=True)
         qa_scrollbar.pack(side="right", fill="y")
 
         def add_qa_row(q_val="", a_val=""):
-            row_idx = len(self.qa_rows)
             row_frame = ttk.Frame(self.scrollable_table_frame)
-            row_frame.pack(fill="x", pady=2)
+            row_frame.pack(fill="x", expand=True, pady=2)
             
-            # Lebar disesuaikan agar pas di 1020px
-            q_ent = tk.Text(row_frame, height=2, width=22, font=("Segoe UI", 9))
+            # Grid dengan weight agar kolom mengisi ruang kosong secara proporsional
+            row_frame.columnconfigure(0, weight=1) # Soal
+            row_frame.columnconfigure(1, weight=2) # Jawaban (diberi ruang lebih besar)
+            row_frame.columnconfigure(2, weight=0) # Tombol hapus
+
+            q_ent = tk.Text(row_frame, height=2, font=("Segoe UI", 9), wrap="word")
             q_ent.insert("1.0", q_val)
-            q_ent.pack(side="left", padx=2)
+            q_ent.grid(row=0, column=0, sticky="ew", padx=(2, 5))
 
-            a_ent = tk.Text(row_frame, height=2, width=28, font=("Segoe UI", 9))
+            a_ent = tk.Text(row_frame, height=2, font=("Segoe UI", 9), wrap="word")
             a_ent.insert("1.0", a_val)
-            a_ent.pack(side="left", padx=2)
+            a_ent.grid(row=0, column=1, sticky="ew", padx=(0, 15))
 
-            ttk.Button(row_frame, text="✕", width=3, command=lambda f=row_frame: remove_row(f)).pack(side="left")
+            def _del_row(f=row_frame):
+                f.destroy()
+                self.qa_rows = [r for r in self.qa_rows if r['frame'] != f]
+
+            ttk.Button(row_frame, text="✕", width=3, command=_del_row).grid(row=0, column=2, padx=(0, 5))
             self.qa_rows.append({'frame': row_frame, 'q_entry': q_ent, 'a_entry': a_ent})
 
-        def remove_row(f):
-            f.destroy()
-            self.qa_rows = [r for r in self.qa_rows if r['frame'] != f]
-
+        # Bar tombol Q&A
         qa_tools = ttk.Frame(self.qa_table_container)
-        qa_tools.pack(fill="x", side="bottom", pady=4)
+        qa_tools.pack(fill="x", side="bottom", pady=(10, 0))
         ttk.Button(qa_tools, text="+ Soal", command=add_qa_row).pack(side="left")
         
         def run_table_ai():
-            if not self.modul_text_cache:
+            if not self.mod_text_cache:
                 messagebox.showwarning("AI", "Muat modul!")
                 return
             for row in self.qa_rows:
@@ -244,7 +258,7 @@ class Bab2Tab(ttk.Frame):
 
         ttk.Button(qa_tools, text="✨ AI Jawab", style="Action.TButton", command=run_table_ai).pack(side="left", padx=5)
 
-        # 4. Gambar
+        # 4. Gambar Section
         self.img_section = ttk.LabelFrame(left_pane, text=" Lampiran Gambar ", padding=8)
         img_main = ttk.Frame(self.img_section)
         img_main.pack(fill="x")
@@ -274,31 +288,41 @@ class Bab2Tab(ttk.Frame):
 
         ttk.Button(self.ai_section, text="🚀 Generate Analisa AI", style="Action.TButton", command=run_ai).pack(fill="x")
 
-        # --- TOGGLE LOGIC ---
+        # --- TOGGLE LOGIC (SOLUSI PEMANFAATAN LAHAN KOSONG) ---
         def toggle_view(*args):
+            # Sembunyikan semua konten terlebih dahulu
             self.modul_frame.pack_forget()
             self.kode_container.pack_forget()
             self.langkah_container.pack_forget()
             self.qa_table_container.pack_forget()
             self.img_section.pack_forget()
             self.ai_section.pack_forget()
+            right_pane.pack_forget()
 
             val = tipe_var.get()
-            if val == "1":
+            if val == "1": # Source Code
+                right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
                 self.kode_container.pack(fill="both", expand=True)
                 self.img_section.pack(fill="x", pady=(8, 0))
                 self.ai_section.pack(fill="both", expand=True)
-            elif val == "2":
+            elif val == "2": # Deskriptif
+                right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
                 self.modul_frame.pack(fill="x", pady=4)
                 self.langkah_container.pack(fill="both", expand=True)
                 self.img_section.pack(fill="x", pady=(8, 0))
                 self.ai_section.pack(fill="both", expand=True)
-            elif val == "3":
+            elif val == "3": # Q&A (MODE LEBAR PENUH)
+                # Di sini rahasianya: right_pane tidak di-pack, 
+                # sehingga left_pane mengambil 100% lebar jendela.
                 self.modul_frame.pack(fill="x", pady=4)
                 self.qa_table_container.pack(fill="both", expand=True)
+                # Paksa canvas menghitung ulang lebar agar kolom langsung melebar ke kanan
+                qa_canvas.update_idletasks()
+                qa_canvas.event_generate("<Configure>")
 
         tipe_var.trace_add("write", toggle_view)
         
+        # Load data awal jika ada
         if qa_initial_data:
             for item in qa_initial_data: add_qa_row(item['q'], item['a'])
         else: add_qa_row()
