@@ -199,37 +199,38 @@ class Bab2Tab(ttk.Frame):
         qa_header.pack(fill="x", pady=(0, 5))
         qa_header.columnconfigure(0, weight=2)
         qa_header.columnconfigure(1, weight=3)
-        qa_header.columnconfigure(2, minsize=50) # Ruang Tombol X
+        qa_header.columnconfigure(2, minsize=50)
         
         ttk.Label(qa_header, text="Pertanyaan", font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=2)
         ttk.Label(qa_header, text="Jawaban", font=("Segoe UI", 9, "bold")).grid(row=0, column=1, sticky="w", padx=2)
 
-        # Canvas & Scrollbar
-        qa_canvas = tk.Canvas(self.qa_table_container, highlightthickness=0, height=200)
-        qa_scrollbar = ttk.Scrollbar(self.qa_table_container, orient="vertical", command=qa_canvas.yview)
+        # --- TABLE AREA (Canvas & Scrollbar) ---
+        # Kita buat frame khusus agar tabel dan scrollbar menyatu
+        table_body_frame = ttk.Frame(self.qa_table_container)
+        table_body_frame.pack(fill="both", expand=True)
+
+        qa_canvas = tk.Canvas(table_body_frame, highlightthickness=0, height=200)
+        qa_scrollbar = ttk.Scrollbar(table_body_frame, orient="vertical", command=qa_canvas.yview)
         scrollable_table_frame = ttk.Frame(qa_canvas)
         canvas_frame_id = qa_canvas.create_window((0, 0), window=scrollable_table_frame, anchor="nw")
 
         def sync_width(event):
-            # Memastikan frame internal mengikuti lebar canvas
             qa_canvas.itemconfig(canvas_frame_id, width=event.width)
         
         qa_canvas.bind("<Configure>", sync_width)
         scrollable_table_frame.bind("<Configure>", lambda e: qa_canvas.configure(scrollregion=qa_canvas.bbox("all")))
         qa_canvas.configure(yscrollcommand=qa_scrollbar.set)
+        
         qa_canvas.pack(side="left", fill="both", expand=True)
         qa_scrollbar.pack(side="right", fill="y")
 
         def add_qa_row(q_val="", a_val=""):
             row_frame = ttk.Frame(scrollable_table_frame)
             row_frame.pack(fill="x", expand=True, pady=2)
-            
-            # Pengaturan Grid yang Ketat
-            row_frame.columnconfigure(0, weight=2) # Pertanyaan
-            row_frame.columnconfigure(1, weight=3) # Jawaban
-            row_frame.columnconfigure(2, weight=0, minsize=50) # Tombol X (Tetap)
+            row_frame.columnconfigure(0, weight=2)
+            row_frame.columnconfigure(1, weight=3)
+            row_frame.columnconfigure(2, weight=0, minsize=50)
 
-            # Ditambahkan width=10 dan width=20 untuk mencegah widget meluap
             q_ent = tk.Text(row_frame, height=2, width=59, font=("Segoe UI", 9), wrap="word")
             q_ent.insert("1.0", q_val)
             q_ent.grid(row=0, column=0, sticky="ew", padx=(0, 5))
@@ -242,15 +243,15 @@ class Bab2Tab(ttk.Frame):
                 row_frame.destroy()
                 self.qa_rows = [r for r in self.qa_rows if r['frame'] != row_frame]
 
-            # Tombol X dipastikan berada di kolom paling kanan
             btn_del = ttk.Button(row_frame, text="✕", width=3, command=_on_delete)
             btn_del.grid(row=0, column=2, sticky="e", padx=(2, 5))
 
             self.qa_rows.append({'frame': row_frame, 'q_entry': q_ent, 'a_entry': a_ent})
 
-        # Tool Buttons
+        # --- TOOL BUTTONS (Sekarang berada di bawah table_body_frame) ---
         qa_tools = ttk.Frame(self.qa_table_container)
-        qa_tools.pack(fill="x", side="bottom", pady=(10, 0))
+        qa_tools.pack(fill="x", pady=(10, 0)) # Dipack setelah table_body_frame
+        
         ttk.Button(qa_tools, text="+ Tambah Soal", command=add_qa_row).pack(side="left")
         
         def run_table_ai():
