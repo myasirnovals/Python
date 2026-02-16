@@ -191,25 +191,26 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(self.langkah_container, text="✨ Generate Langkah (AI)", style="Action.TButton",
                    command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(fill="x", pady=(4,0))
 
-        # 3. Q&A Table (FULL WIDTH OPTIMIZED)
+        # 3. Q&A Table (DENGAN PENOMORAN DAN TOMBOL DI BAWAH)
         self.qa_table_container = ttk.Frame(self.content_container)
         
         # --- HEADER ---
         qa_header = ttk.Frame(self.qa_table_container)
         qa_header.pack(fill="x", pady=(0, 5))
-        qa_header.columnconfigure(0, weight=2)
-        qa_header.columnconfigure(1, weight=3)
-        qa_header.columnconfigure(2, minsize=50)
+        qa_header.columnconfigure(0, minsize=35) # Kolom No
+        qa_header.columnconfigure(1, weight=2)   # Kolom Pertanyaan
+        qa_header.columnconfigure(2, weight=3)   # Kolom Jawaban
+        qa_header.columnconfigure(3, minsize=50) # Kolom Hapus
         
-        ttk.Label(qa_header, text="Pertanyaan", font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=2)
-        ttk.Label(qa_header, text="Jawaban", font=("Segoe UI", 9, "bold")).grid(row=0, column=1, sticky="w", padx=2)
+        ttk.Label(qa_header, text="No.", font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=2)
+        ttk.Label(qa_header, text="Pertanyaan", font=("Segoe UI", 9, "bold")).grid(row=0, column=1, sticky="w", padx=2)
+        ttk.Label(qa_header, text="Jawaban", font=("Segoe UI", 9, "bold")).grid(row=0, column=2, sticky="w", padx=2)
 
         # --- TABLE AREA (Canvas & Scrollbar) ---
-        # Kita buat frame khusus agar tabel dan scrollbar menyatu
         table_body_frame = ttk.Frame(self.qa_table_container)
         table_body_frame.pack(fill="both", expand=True)
 
-        qa_canvas = tk.Canvas(table_body_frame, highlightthickness=0, height=200)
+        qa_canvas = tk.Canvas(table_body_frame, highlightthickness=0, height=220)
         qa_scrollbar = ttk.Scrollbar(table_body_frame, orient="vertical", command=qa_canvas.yview)
         scrollable_table_frame = ttk.Frame(qa_canvas)
         canvas_frame_id = qa_canvas.create_window((0, 0), window=scrollable_table_frame, anchor="nw")
@@ -224,46 +225,67 @@ class Bab2Tab(ttk.Frame):
         qa_canvas.pack(side="left", fill="both", expand=True)
         qa_scrollbar.pack(side="right", fill="y")
 
+        def renumber_qa():
+            """Fungsi untuk memperbarui nomor urut"""
+            for i, row in enumerate(self.qa_rows, 1):
+                row['no_label'].config(text=f"{i}.")
+
         def add_qa_row(q_val="", a_val=""):
             row_frame = ttk.Frame(scrollable_table_frame)
             row_frame.pack(fill="x", expand=True, pady=2)
-            row_frame.columnconfigure(0, weight=2)
-            row_frame.columnconfigure(1, weight=3)
-            row_frame.columnconfigure(2, weight=0, minsize=50)
+            row_frame.columnconfigure(0, minsize=35)
+            row_frame.columnconfigure(1, weight=2)
+            row_frame.columnconfigure(2, weight=3)
+            row_frame.columnconfigure(3, weight=0, minsize=50)
 
-            q_ent = tk.Text(row_frame, height=2, width=59, font=("Segoe UI", 9), wrap="word")
+            # Label Nomor
+            no_lbl = ttk.Label(row_frame, text="", font=("Segoe UI", 9))
+            no_lbl.grid(row=0, column=0, sticky="nw", pady=5)
+
+            q_ent = tk.Text(row_frame, height=2, width=30, font=("Segoe UI", 9), wrap="word")
             q_ent.insert("1.0", q_val)
-            q_ent.grid(row=0, column=0, sticky="ew", padx=(0, 5))
+            q_ent.grid(row=0, column=1, sticky="ew", padx=(0, 5))
 
-            a_ent = tk.Text(row_frame, height=2, width=55, font=("Segoe UI", 9), wrap="word")
+            a_ent = tk.Text(row_frame, height=2, width=40, font=("Segoe UI", 9), wrap="word")
             a_ent.insert("1.0", a_val)
-            a_ent.grid(row=0, column=1, sticky="ew", padx=(0, 5))
+            a_ent.grid(row=0, column=2, sticky="ew", padx=(0, 5))
 
             def _on_delete():
                 row_frame.destroy()
-                self.qa_rows = [r for r in self.qa_rows if r['frame'] != row_frame]
+                # Hapus dari list self.qa_rows
+                self.qa_rows[:] = [r for r in self.qa_rows if r['frame'] != row_frame]
+                renumber_qa()
 
             btn_del = ttk.Button(row_frame, text="✕", width=3, command=_on_delete)
-            btn_del.grid(row=0, column=2, sticky="e", padx=(2, 5))
+            btn_del.grid(row=0, column=3, sticky="ne", padx=(2, 5))
 
-            self.qa_rows.append({'frame': row_frame, 'q_entry': q_ent, 'a_entry': a_ent})
+            # Simpan referensi ke list
+            self.qa_rows.append({
+                'frame': row_frame, 
+                'no_label': no_lbl, 
+                'q_entry': q_ent, 
+                'a_entry': a_ent
+            })
+            renumber_qa()
 
-        # --- TOOL BUTTONS (Sekarang berada di bawah table_body_frame) ---
+        # --- TOOL BUTTONS (Pindah ke bawah) ---
         qa_tools = ttk.Frame(self.qa_table_container)
-        qa_tools.pack(fill="x", pady=(10, 0)) # Dipack setelah table_body_frame
+        qa_tools.pack(fill="x", pady=(10, 0))
         
         ttk.Button(qa_tools, text="+ Tambah Soal", command=add_qa_row).pack(side="left")
         
         def run_table_ai():
             if not self.modul_text_cache:
-                messagebox.showwarning("AI", "Muat modul!")
+                messagebox.showwarning("AI", "Muat modul terlebih dahulu!")
                 return
             for row in self.qa_rows:
                 q_text = row['q_entry'].get("1.0", "end-1c").strip()
                 a_text = row['a_entry'].get("1.0", "end-1c").strip()
                 if q_text and not a_text:
                     ans, err = self.app.analysis_service.answer_question(q_text, self.modul_text_cache)
-                    if not err: row['a_entry'].insert("1.0", ans)
+                    if not err: 
+                        row['a_entry'].delete("1.0", tk.END)
+                        row['a_entry'].insert("1.0", ans)
 
         ttk.Button(qa_tools, text="✨ AI Jawab", style="Action.TButton", command=run_table_ai).pack(side="left", padx=5)
 
