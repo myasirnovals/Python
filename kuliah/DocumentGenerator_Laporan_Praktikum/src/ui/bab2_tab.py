@@ -409,7 +409,9 @@ class Bab2Tab(ttk.Frame):
         if self.kode_listbox is not None:
             self.kode_listbox.delete(0, tk.END)
             for f in self.kode_items:
-                self.kode_listbox.insert(tk.END, f"📄 {f['nama']}")
+                # Menampilkan Judul (jika ada) atau Nama File asli
+                display_name = f.get("judul") or f.get("nama")
+                self.kode_listbox.insert(tk.END, f"📄 {display_name}")
 
         if self.gambar_listbox is not None:
             self.gambar_listbox.delete(0, tk.END)
@@ -420,33 +422,76 @@ class Bab2Tab(ttk.Frame):
                 )
 
     def _add_kode_logic(self):
-        paths = filedialog.askopenfilenames(
-            title="Pilih File Source Code",
-            filetypes=[
-                (
-                    "Source Code",
-                    "*.py;*.c;*.cpp;*.java;*.js;*.html;*.css;*.php;*.sql;*.txt",
-                ),
-                ("All Files", "*.*"),
-            ],
-        )
+        # Membuat jendela pop-up baru
+        dialog = tk.Toplevel(self)
+        dialog.title("Tambah Source Code")
+        dialog.geometry("450x240")
+        dialog.configure(bg="#f8f9fa")
+        dialog.transient(self)
+        dialog.grab_set()
 
-        if not paths:
-            return
+        judul_var = tk.StringVar()
+        path_var = tk.StringVar()
 
-        for path in paths:
+        # Layout Container
+        container = ttk.Frame(dialog, padding=20)
+        container.pack(fill="both", expand=True)
+
+        # Field Judul
+        ttk.Label(container, text="Judul Source Code:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        ttk.Entry(container, textvariable=judul_var).pack(fill="x", pady=(5, 15))
+
+        # Field Path File & Tombol Browse
+        ttk.Label(container, text="File Source Code:", font=("Segoe UI", 9, "bold")).pack(anchor="w")
+        file_row = ttk.Frame(container)
+        file_row.pack(fill="x", pady=5)
+        
+        # Entry path dibuat readonly agar user hanya bisa lewat tombol browse
+        path_ent = ttk.Entry(file_row, textvariable=path_var, state="readonly")
+        path_ent.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        def browse_file():
+            path = filedialog.askopenfilename(
+                title="Pilih File Source Code",
+                filetypes=[
+                    ("Source Code", "*.py;*.c;*.cpp;*.java;*.js;*.html;*.css;*.php;*.sql;*.txt"),
+                    ("All Files", "*.*")
+                ]
+            )
+            if path:
+                path_var.set(path)
+
+        ttk.Button(file_row, text="...", width=3, command=browse_file).pack(side="right")
+
+        # Tombol Aksi di Bawah
+        btn_frame = ttk.Frame(container)
+        btn_frame.pack(side="bottom", fill="x", pady=(10, 0))
+
+        def on_save():
+            judul = judul_var.get().strip()
+            path = path_var.get().strip()
+            
+            if not judul or not path:
+                messagebox.showwarning("Validasi", "Judul dan File harus diisi!")
+                return
+            
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
-
-                nama_file = os.path.basename(path)
-                self.kode_items.append({"nama": nama_file, "isi": content})
+                
+                # Simpan ke list dengan judul kustom
+                self.kode_items.append({
+                    "judul": judul,
+                    "nama": os.path.basename(path),
+                    "isi": content
+                })
+                self._refresh_dialog_lists()
+                dialog.destroy()
             except Exception as e:
-                messagebox.showerror(
-                    "Error", f"Gagal membaca file {os.path.basename(path)}: {e}"
-                )
+                messagebox.showerror("Error", f"Gagal membaca file: {e}")
 
-        self._refresh_dialog_lists()
+        ttk.Button(btn_frame, text="Simpan", style="Action.TButton", command=on_save).pack(side="right", padx=5)
+        ttk.Button(btn_frame, text="Batal", command=dialog.destroy).pack(side="right")
 
     def _remove_kode_logic(self):
         sel = self.kode_listbox.curselection()
