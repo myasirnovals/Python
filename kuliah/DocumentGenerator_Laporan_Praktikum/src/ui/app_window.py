@@ -64,7 +64,7 @@ class App(tk.Tk):
             side="left"
         )
         ttk.Label(
-            header_frame, text="v3.0.0 Beta", foreground="#6c757d"
+            header_frame, text="v3.10.1 Beta", foreground="#6c757d"
         ).pack(side="left", padx=10, pady=(5, 0))
 
         self.notebook = ttk.Notebook(main_container)
