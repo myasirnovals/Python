@@ -1,4 +1,5 @@
 import os
+import re
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from tkinter import scrolledtext
@@ -138,20 +139,47 @@ class Bab1Tab(ttk.Frame):
 
         def save():
             raw_text = self.isi_a_text.get("1.0", "end-1c")
-            # Memecah teks menjadi list agar bisa di-loop di Word
-            langkah_list = [line.strip() for line in raw_text.split('\n') if line.strip()]
+    
+            langkah_list = []
+            # Memecah baris dan membersihkan karakter whitespace standar
+            lines = [l.strip() for l in raw_text.split("\n") if l.strip()]
             
-            # Menentukan label (Source Code atau Langkah Kerja)
+            for i, line in enumerate(lines, 1):
+                # 1. Membersihkan karakter aneh/non-printable di awal string (BOM, dsb)
+                # re.sub(r'^[^\w\s]+', '', line) akan menghapus simbol aneh di depan
+                clean_line = re.sub(r'^[^\w\s\d]+', '', line).strip()
+
+                # 2. Regex yang lebih toleran: 
+                # ^\s*(\d+)   : Mencari angka di awal
+                # [\s\.\)\-]* : Mencari pemisah (titik, kurung, strip, spasi)
+                # (.*)        : Mengambil sisa kalimatnya
+                match = re.match(r'^\s*(\d+)[\s\.\)\-]*\s*(.*)', clean_line)
+                
+                if match:
+                    nomor_ditemukan = match.group(1)
+                    teks_asli = match.group(2).strip()
+                    
+                    langkah_list.append({
+                        "nomor": nomor_ditemukan, 
+                        "langkah_kerja": teks_asli
+                    })
+                else:
+                    # Jika tidak ada pola angka, gunakan index loop
+                    langkah_list.append({
+                        "nomor": i, 
+                        "langkah_kerja": clean_line
+                    })
+            
             label_a = "Source Code" if tipe_var.get() == "1" else "Langkah Kerja"
 
             res_val["data"] = {
                 "judul_sub_bab": judul_var.get(),
                 "tipe": tipe_var.get(),
-                "label_point_a": label_a,         # Sinkron dengan template line 53
-                "list_kode": self.kode_items,      # Nama diubah agar sinkron (tadi kode_files)
-                "langkah_list": langkah_list,      # Variabel baru untuk perulangan di Word
-                "list_gambar": self.gambar_items,  # Nama diubah agar sinkron (tadi gambar_paths)
-                "isi_analisa": analisa_text.get("1.0", "end-1c"), # Nama diubah agar sinkron
+                "label_point_a": label_a,
+                "list_kode": self.kode_items,
+                "langkah_list": langkah_list,
+                "list_gambar": self.gambar_items,
+                "isi_analisa": analisa_text.get("1.0", "end-1c"),
             }
             dialog.destroy()
 

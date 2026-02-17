@@ -136,6 +136,15 @@ class Bab2Tab(ttk.Frame):
         res_val = {"data": None}
 
         def save():
+            langkah_list = []
+            if tipe_var.get() == "2":
+                raw_text = self.isi_a_text.get("1.0", "end-1c")
+                langkah_list = [
+                    {"nomor": i, "langkah_kerja": line.strip()}
+                    for i, line in enumerate(raw_text.split("\n"), 1)
+                    if line.strip()
+                ]
+
             qa_list_final = []
             if tipe_var.get() == "3":
                 for row in self.qa_rows:
@@ -148,6 +157,7 @@ class Bab2Tab(ttk.Frame):
                 "judul_sub_bab": judul_var.get(),
                 "tipe": tipe_var.get(),
                 "isi_a": self.isi_a_text.get("1.0", "end-1c"),
+                "langkah_list": langkah_list,
                 "qa_list": qa_list_final,
                 "kode_files": self.kode_items,
                 "gambar_paths": self.gambar_items,
@@ -177,7 +187,7 @@ class Bab2Tab(ttk.Frame):
         type_row = ttk.Frame(info_frame)
         type_row.pack(fill="x", pady=2)
         ttk.Radiobutton(type_row, text="Source Code", variable=tipe_var, value="1").pack(side="left")
-        ttk.Radiobutton(type_row, text="Deskriptif", variable=tipe_var, value="2").pack(side="left", padx=10)
+        ttk.Radiobutton(type_row, text="Langkah Kerja", variable=tipe_var, value="2").pack(side="left", padx=10)
         ttk.Radiobutton(type_row, text="Q & A", variable=tipe_var, value="3").pack(side="left")
 
         self.modul_frame = ttk.Frame(info_frame)

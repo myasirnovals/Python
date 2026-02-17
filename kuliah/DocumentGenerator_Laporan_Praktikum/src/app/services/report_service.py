@@ -1,4 +1,5 @@
 import os
+import re
 
 try:
     import win32com.client as win32
@@ -14,6 +15,41 @@ class ReportService:
     def __init__(self, templates_dir):
         self.templates_dir = templates_dir
 
+    @staticmethod
+    def _normalize_langkah_list(raw_value):
+        if not raw_value:
+            return []
+
+        # Jika sudah dalam bentuk list of dict (dari UI), langsung return
+        if isinstance(raw_value, list) and len(raw_value) > 0 and isinstance(raw_value[0], dict):
+            return raw_value
+
+        if isinstance(raw_value, str):
+            lines = [line.strip() for line in raw_value.split("\n") if line.strip()]
+        else:
+            lines = raw_value
+
+        normalized = []
+        for idx, line in enumerate(lines, 1):
+            if not isinstance(line, str): continue
+            
+            # Bersihkan karakter sampah di awal (sama seperti di UI)
+            text = re.sub(r'^[^\w\s\d]+', '', line).strip()
+            
+            # Regex yang lebih fleksibel
+            match = re.match(r'^\s*(\d+)[\s\.\)\-]*\s*(.*)', text)
+            
+            if match:
+                nomor = match.group(1)
+                langkah = match.group(2).strip()
+            else:
+                nomor = idx
+                langkah = text
+
+            normalized.append({"nomor": nomor, "langkah_kerja": langkah})
+
+        return normalized
+
     def resolve_template(self, template_choice):
         name = "format-1.docx" if template_choice == "1" else "format-2.docx"
         template_path = os.path.join(self.templates_dir, name)
@@ -25,16 +61,27 @@ class ReportService:
         daftar_sub_bab = []
         counter_gbr_bab1 = 1
         for item in bab1_items:
-            label_a = "Source Code" if item.get("tipe") == "1" else "Langkah Kerja"
-            isi_a = item.get("isi_a", "") if item.get("tipe") == "2" else ""
+            label_a = item.get("label_point_a") or (
+                "Source Code" if item.get("tipe") == "1" else "Langkah Kerja"
+            )
+            langkah_list = self._normalize_langkah_list(
+                item.get("langkah_list") or item.get("isi_a", "")
+            )
+            if item.get("tipe") == "2":
+                isi_a = "\n".join(
+                    [step.get("langkah_kerja", "") for step in langkah_list]
+                )
+            else:
+                isi_a = ""
 
-            kode_items = item.get("kode_files", [])
+            kode_items = item.get("list_kode") or item.get("kode_files", [])
             list_kode_final = []
             if len(kode_items) > 0:
                 for i, d in enumerate(kode_items, 1):
+                    nama_tampil = d.get("judul") or d.get("nama", "")
                     if len(kode_items) > 1:
                         prefix = "\n" if i > 1 else ""
-                        judul_tampil = RichText(f"{prefix}{i}. {d.get('nama', '')}")
+                        judul_tampil = RichText(f"{prefix}{i}. {nama_tampil}")
                     else:
                         judul_tampil = "##HAPUS##"
                     list_kode_final.append(
@@ -42,7 +89,7 @@ class ReportService:
                     )
 
             list_gbr = []
-            for g in item.get("gambar_paths", []):
+            for g in item.get("list_gambar") or item.get("gambar_paths", []):
                 obj = muat_gambar(doc, g.get("path", ""))
                 if not obj:
                     continue
@@ -60,8 +107,9 @@ class ReportService:
                     "judul_sub_bab": item.get("judul_sub_bab", ""),
                     "label_point_a": label_a,
                     "isi_point_a": isi_a,
+                    "langkah_list": langkah_list,
                     "list_gambar": list_gbr,
-                    "isi_analisa": item.get("analisa", ""),
+                    "isi_analisa": item.get("isi_analisa") or item.get("analisa", ""),
                     "list_kode": list_kode_final,
                 }
             )
@@ -113,7 +161,7 @@ class ReportService:
         for item in bab2_items:
             tipe = item.get("tipe", "1")
             list_gbr_tgs = []
-            for g in item.get("gambar_paths", []):
+            for g in item.get("list_gambar") or item.get("gambar_paths", []):
                 obj = muat_gambar(doc, g.get("path", ""))
                 if not obj:
                     continue
@@ -128,12 +176,13 @@ class ReportService:
 
             list_kode_final = []
             if tipe == "1":
-                kode_items = item.get("kode_files", [])
+                kode_items = item.get("list_kode") or item.get("kode_files", [])
                 if len(kode_items) > 0:
                     for i, d in enumerate(kode_items, 1):
+                        nama_tampil = d.get("judul") or d.get("nama", "")
                         if len(kode_items) > 1:
                             prefix = "\n" if i > 1 else ""
-                            judul_tampil = RichText(f"{prefix}{i}. {d.get('nama', '')}")
+                            judul_tampil = RichText(f"{prefix}{i}. {nama_tampil}")
                         else:
                             judul_tampil = "##HAPUS##"
                         list_kode_final.append(
@@ -151,8 +200,18 @@ class ReportService:
                 if a_text:
                     qa_answers.append(f"{i}. {a_text}")
 
-            isi_a = item.get("isi_a", "")
-            analisa = item.get("analisa", "")
+            langkah_list = item.get("langkah_list", [])
+            if not langkah_list and item.get("isi_a"):
+                langkah_list = [
+                    line.strip()
+                    for line in item.get("isi_a", "").split("\n")
+                    if line.strip()
+                ]
+
+            isi_a = item.get("isi_point_a") or item.get("isi_a", "")
+            analisa = item.get("isi_analisa") or item.get("analisa", "")
+            if not langkah_list:
+                langkah_list = self._normalize_langkah_list(item.get("isi_a", ""))
             if tipe == "3":
                 isi_soal = "\n".join(qa_questions)
                 isi_jawaban = "\n".join(qa_answers)
@@ -180,6 +239,7 @@ class ReportService:
                     "isi_point_a": isi_point_a,
                     "list_kode": list_kode_final,
                     "isi_analisa": isi_analisa,
+                    "langkah_list": langkah_list,
                     "qa_list": qa_list,
                     "isi_soal": isi_soal,
                     "isi_jawaban": isi_jawaban,
