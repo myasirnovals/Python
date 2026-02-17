@@ -68,6 +68,20 @@ class Bab2Tab(ttk.Frame):
     def get_items(self):
         return self.bab2_items
 
+    def fill_test_data(self):
+        self.bab2_items = [
+            {
+                "judul_sub_bab": "Tugas 1: Validasi Input",
+                "tipe": "2",
+                "isi_a": "Buat program yang menolak input kosong dan menampilkan pesan kesalahan.",
+                "qa_list": [],
+                "kode_files": [],
+                "gambar_paths": [],
+                "analisa": "Validasi memastikan data tidak kosong sebelum diproses lebih lanjut.",
+            }
+        ]
+        self._refresh_bab2_list()
+
     def _refresh_bab2_list(self):
         self.bab2_listbox.delete(0, tk.END)
         for i, item in enumerate(self.bab2_items, 1):

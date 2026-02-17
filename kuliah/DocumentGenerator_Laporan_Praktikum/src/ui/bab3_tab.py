@@ -82,3 +82,14 @@ class Bab3Tab(ttk.Frame):
         if not self.kesimpulan_text:
             return ""
         return self.kesimpulan_text.get("1.0", "end-1c")
+
+    def fill_test_data(self):
+        if not self.kesimpulan_text:
+            return
+        self.kesimpulan_text.delete("1.0", tk.END)
+        self.kesimpulan_text.insert(
+            "1.0",
+            "Praktikum ini menunjukkan pentingnya validasi input dan kontrol alur program. "
+            "Penggunaan percabangan membantu memastikan hasil sesuai kondisi yang ditetapkan. "
+            "Secara keseluruhan, implementasi berjalan sesuai spesifikasi dan dapat dikembangkan lebih lanjut.",
+        )

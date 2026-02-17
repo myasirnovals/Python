@@ -67,6 +67,12 @@ class App(tk.Tk):
             header_frame, text="v3.10.1 Beta", foreground="#6c757d"
         ).pack(side="left", padx=10, pady=(5, 0))
 
+        ttk.Button(
+            header_frame,
+            text="DEV: Isi Data",
+            command=self._fill_test_data,
+        ).pack(side="right")
+
         self.notebook = ttk.Notebook(main_container)
         self.notebook.pack(fill="both", expand=True)
 
@@ -87,3 +93,13 @@ class App(tk.Tk):
         self.bab2_tab = Bab2Tab(self, bab2_frame)
         self.bab3_tab = Bab3Tab(self, bab3_frame)
         self.generate_tab = GenerateTab(self, generate_frame)
+
+    def _fill_test_data(self):
+        if self.cover_tab:
+            self.cover_tab.fill_test_data()
+        if self.bab1_tab:
+            self.bab1_tab.fill_test_data()
+        if self.bab2_tab:
+            self.bab2_tab.fill_test_data()
+        if self.bab3_tab:
+            self.bab3_tab.fill_test_data()

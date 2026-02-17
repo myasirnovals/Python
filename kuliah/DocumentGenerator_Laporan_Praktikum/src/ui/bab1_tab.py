@@ -68,6 +68,19 @@ class Bab1Tab(ttk.Frame):
     def get_items(self):
         return self.bab1_items
 
+    def fill_test_data(self):
+        self.bab1_items = [
+            {
+                "judul_sub_bab": "Percobaan 1: Percabangan",
+                "tipe": "2",
+                "isi_a": "Jika nilai lebih besar dari 75 maka tampilkan LULUS.",
+                "kode_files": [],
+                "gambar_paths": [],
+                "analisa": "Program memeriksa kondisi nilai dan menampilkan status sesuai aturan.",
+            }
+        ]
+        self._refresh_bab1_list()
+
     def _refresh_bab1_list(self):
         self.bab1_listbox.delete(0, tk.END)
         for i, item in enumerate(self.bab1_items, 1):
@@ -124,13 +137,21 @@ class Bab1Tab(ttk.Frame):
         res_val = {"data": None}
 
         def save():
+            raw_text = self.isi_a_text.get("1.0", "end-1c")
+            # Memecah teks menjadi list agar bisa di-loop di Word
+            langkah_list = [line.strip() for line in raw_text.split('\n') if line.strip()]
+            
+            # Menentukan label (Source Code atau Langkah Kerja)
+            label_a = "Source Code" if tipe_var.get() == "1" else "Langkah Kerja"
+
             res_val["data"] = {
                 "judul_sub_bab": judul_var.get(),
                 "tipe": tipe_var.get(),
-                "isi_a": self.isi_a_text.get("1.0", "end-1c"),
-                "kode_files": self.kode_items,
-                "gambar_paths": self.gambar_items,
-                "analisa": analisa_text.get("1.0", "end-1c"),
+                "label_point_a": label_a,         # Sinkron dengan template line 53
+                "list_kode": self.kode_items,      # Nama diubah agar sinkron (tadi kode_files)
+                "langkah_list": langkah_list,      # Variabel baru untuk perulangan di Word
+                "list_gambar": self.gambar_items,  # Nama diubah agar sinkron (tadi gambar_paths)
+                "isi_analisa": analisa_text.get("1.0", "end-1c"), # Nama diubah agar sinkron
             }
             dialog.destroy()
 

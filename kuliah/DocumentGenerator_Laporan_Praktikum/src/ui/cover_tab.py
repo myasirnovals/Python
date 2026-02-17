@@ -79,3 +79,12 @@ class CoverTab(ttk.Frame):
 
     def get_template_choice(self):
         return self.template_choice.get()
+
+    def fill_test_data(self):
+        self.cover_vars["mata_kuliah"].set("Pemrograman Dasar")
+        self.cover_vars["nomor_modul"].set("03")
+        self.cover_vars["judul"].set("Percabangan dan Perulangan")
+        self.cover_vars["nama"].set("Budi Santoso")
+        self.cover_vars["nim"].set("2201234567")
+        self.cover_vars["tahun"].set("2025/2026")
+        self.template_choice.set("1")
