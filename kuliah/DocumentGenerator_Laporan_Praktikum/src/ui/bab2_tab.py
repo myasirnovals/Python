@@ -195,12 +195,12 @@ class Bab2Tab(ttk.Frame):
         self.qa_table_container = ttk.Frame(self.content_container)
         
         # --- HEADER ---
-        qa_header = ttk.Frame(self.qa_table_container)
+        qa_header = ttk.Frame(self.qa_table_container, padding=(0, 0, 25, 0))
         qa_header.pack(fill="x", pady=(0, 5))
-        qa_header.columnconfigure(0, minsize=35) # Kolom No
-        qa_header.columnconfigure(1, weight=2)   # Kolom Pertanyaan
-        qa_header.columnconfigure(2, weight=3)   # Kolom Jawaban
-        qa_header.columnconfigure(3, minsize=50) # Kolom Hapus
+        qa_header.columnconfigure(0, weight=0, minsize=35) 
+        qa_header.columnconfigure(1, weight=4)   # 40%
+        qa_header.columnconfigure(2, weight=6)   # 60%
+        qa_header.columnconfigure(3, weight=0, minsize=50)
         
         ttk.Label(qa_header, text="No.", font=("Segoe UI", 9, "bold")).grid(row=0, column=0, sticky="w", padx=2)
         ttk.Label(qa_header, text="Pertanyaan", font=("Segoe UI", 9, "bold")).grid(row=0, column=1, sticky="w", padx=2)
@@ -233,9 +233,9 @@ class Bab2Tab(ttk.Frame):
         def add_qa_row(q_val="", a_val=""):
             row_frame = ttk.Frame(scrollable_table_frame)
             row_frame.pack(fill="x", expand=True, pady=2)
-            row_frame.columnconfigure(0, minsize=35)
-            row_frame.columnconfigure(1, weight=2)
-            row_frame.columnconfigure(2, weight=3)
+            row_frame.columnconfigure(0, weight=0, minsize=35)
+            row_frame.columnconfigure(1, weight=4)
+            row_frame.columnconfigure(2, weight=6)
             row_frame.columnconfigure(3, weight=0, minsize=50)
 
             # Label Nomor
@@ -346,6 +346,12 @@ class Bab2Tab(ttk.Frame):
                 self.qa_table_container.pack(fill="both", expand=True)
                 # Sinkronisasi ulang lebar setelah panel Q&A muncul
                 dialog.after(100, lambda: qa_canvas.event_generate("<Configure>"))
+
+                # --- PERBAIKAN DI SINI ---
+                # Memaksa Tkinter memproses semua antrean visual
+                dialog.update_idletasks()
+                # Memicu fungsi sync_width secara manual agar kolom langsung melebar
+                qa_canvas.event_generate("<Configure>")
 
         tipe_var.trace_add("write", toggle_view)
         
