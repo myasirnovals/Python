@@ -135,14 +135,26 @@ class ReportService:
 
             kode_items = item.get("list_kode") or item.get("kode_files", [])
             list_kode_final = []
-            if len(kode_items) > 0:
+
+            total_files = len(kode_items) # Hitung total file dulu
+
+            if total_files > 0:
                 for i, d in enumerate(kode_items, 1):
+                    # Ambil nama file, prioritas 'judul' lalu 'nama'
                     nama_tampil = d.get("judul") or d.get("nama", "")
-                    if len(kode_items) > 1:
+
+                    if total_files > 1:
+                        # --- KASUS MULTIPLE CODE ---
+                        # Pakai Nomor (1. NamaFile)
+                        # Tambah "\n" (Enter) jika ini file ke-2 atau lebih.
+                        # Tujuannya: Memutus rantai tabel agar tidak menyatu di Word.
                         prefix = "\n" if i > 1 else ""
-                        judul_tampil = RichText(f"{prefix}{i}. {nama_tampil}")
+                        judul_tampil = f"{prefix}{i}. {nama_tampil}"
                     else:
-                        judul_tampil = "##HAPUS##"
+                        # --- KASUS SINGLE CODE ---
+                        # Hapus penanda (Judul jadi string kosong)
+                        judul_tampil = ""
+
                     list_kode_final.append(
                         {"judul": judul_tampil, "isi": d.get("isi", "")}
                     )
