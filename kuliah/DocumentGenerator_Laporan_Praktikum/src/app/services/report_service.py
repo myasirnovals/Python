@@ -17,38 +17,99 @@ class ReportService:
 
     @staticmethod
     def _normalize_langkah_list(raw_value):
+        """
+        LOGIKA BARU (ADAPTASI DARI USER):
+        Mengubah input menjadi List of Strings dengan format "1.\tLangkah Kerja".
+        Menambahkan '##HAPUS##' di awal untuk trik kerapian.
+        """
         if not raw_value:
-            return []
+            return ["##HAPUS##", "Langkah kerja tidak diisi."]
 
-        # Jika sudah dalam bentuk list of dict (dari UI), langsung return
-        if isinstance(raw_value, list) and len(raw_value) > 0 and isinstance(raw_value[0], dict):
-            return raw_value
-
-        if isinstance(raw_value, str):
-            lines = [line.strip() for line in raw_value.split("\n") if line.strip()]
+        # Ambil list baris teks
+        if isinstance(raw_value, list):
+            # Jika input dari UI sudah list, ambil teksnya saja jika itu dict
+            lines = []
+            for item in raw_value:
+                if isinstance(item, dict):
+                    lines.append(item.get("langkah_kerja", ""))
+                else:
+                    lines.append(str(item))
         else:
-            lines = raw_value
+            # Jika input string (dari textarea), pecah berdasarkan Enter
+            lines = raw_value.splitlines()
 
         normalized = []
-        for idx, line in enumerate(lines, 1):
+        nomor_urut = 1
+
+        for line in lines:
             if not isinstance(line, str): continue
             
-            # Bersihkan karakter sampah di awal (sama seperti di UI)
-            text = re.sub(r'^[^\w\s\d]+', '', line).strip()
+            # 1. Bersihkan spasi kiri kanan
+            teks = line.strip()
             
-            # Regex yang lebih fleksibel
-            match = re.match(r'^\s*(\d+)[\s\.\)\-]*\s*(.*)', text)
+            # 2. FILTER KERAS (VACUUM CLEANER) a la generator_laporan.py
+            # Hapus angka/bullet bawaan user supaya kita bisa nomori ulang
+            teks_bersih = teks.lstrip(' *-•.1234567890').strip()
             
-            if match:
-                nomor = match.group(1)
-                langkah = match.group(2).strip()
-            else:
-                nomor = idx
-                langkah = text
+            if teks_bersih:
+                # 3. FORMATTING RAPI: Angka + Titik + TAB + Teks
+                item_baru = f"{nomor_urut}.\t{teks_bersih}"
+                normalized.append(item_baru)
+                nomor_urut += 1
 
-            normalized.append({"nomor": nomor, "langkah_kerja": langkah})
+        # Tambahkan pemicu ##HAPUS## di paling atas
+        if not normalized:
+            return ["##HAPUS##", "Langkah kerja kosong."]
+            
+        return ["##HAPUS##"] + normalized
+    
+    @staticmethod
+    def _hapus_baris_hantu(output_path):
+        """Menghapus baris yang berisi ##HAPUS##"""
+        try:
+            doc = Document(output_path)
+            for p in list(doc.paragraphs):
+                if "##HAPUS##" in p.text:
+                    p._element.getparent().remove(p._element)
+            doc.save(output_path)
+        except Exception:
+            pass
 
-        return normalized
+    @staticmethod
+    def _hapus_paragraf_kosong_spesifik(output_path):
+        """
+        Fungsi 'Sniper': Hanya menghapus baris kosong di area Langkah Kerja,
+        tanpa merusak Cover.
+        """
+        print("🎯 Membersihkan spasi renggang...")
+        try:
+            doc = Document(output_path)
+            area_aman = False
+            paragraphs_to_delete = []
+            
+            for p in doc.paragraphs:
+                teks = p.text.strip()
+                # Trigger aman setelah melewati Daftar Isi atau Bab 1
+                if "DAFTAR ISI" in teks or "BAB I" in teks or "HASIL PRAKTIKUM" in teks:
+                    area_aman = True
+                
+                if area_aman:
+                    # Cek kosong & bukan gambar
+                    kosong = not teks
+                    xml = p._element.xml
+                    ada_gambar = "w:drawing" in xml or "w:object" in xml or "w:inline" in xml
+                    
+                    if kosong and not ada_gambar:
+                        paragraphs_to_delete.append(p)
+
+            for p in paragraphs_to_delete:
+                try:
+                    p._element.getparent().remove(p._element)
+                except:
+                    pass
+            doc.save(output_path)
+        except Exception as e:
+            print(f"⚠️ Warning pembersihan: {e}")
 
     def resolve_template(self, template_choice):
         name = "format-1.docx" if template_choice == "1" else "format-2.docx"
@@ -68,22 +129,32 @@ class ReportService:
                 item.get("langkah_list") or item.get("isi_a", "")
             )
             if item.get("tipe") == "2":
-                isi_a = "\n".join(
-                    [step.get("langkah_kerja", "") for step in langkah_list]
-                )
+                isi_a = langkah_list
             else:
-                isi_a = ""
+                isi_a = []
 
             kode_items = item.get("list_kode") or item.get("kode_files", [])
             list_kode_final = []
-            if len(kode_items) > 0:
+
+            total_files = len(kode_items) # Hitung total file dulu
+
+            if total_files > 0:
                 for i, d in enumerate(kode_items, 1):
+                    # Ambil nama file, prioritas 'judul' lalu 'nama'
                     nama_tampil = d.get("judul") or d.get("nama", "")
-                    if len(kode_items) > 1:
+
+                    if total_files > 1:
+                        # --- KASUS MULTIPLE CODE ---
+                        # Pakai Nomor (1. NamaFile)
+                        # Tambah "\n" (Enter) jika ini file ke-2 atau lebih.
+                        # Tujuannya: Memutus rantai tabel agar tidak menyatu di Word.
                         prefix = "\n" if i > 1 else ""
-                        judul_tampil = RichText(f"{prefix}{i}. {nama_tampil}")
+                        judul_tampil = f"{prefix}{i}. {nama_tampil}"
                     else:
-                        judul_tampil = "##HAPUS##"
+                        # --- KASUS SINGLE CODE ---
+                        # Hapus penanda (Judul jadi string kosong)
+                        judul_tampil = ""
+
                     list_kode_final.append(
                         {"judul": judul_tampil, "isi": d.get("isi", "")}
                     )
@@ -115,19 +186,6 @@ class ReportService:
             )
 
         return daftar_sub_bab
-
-    @staticmethod
-    def _hapus_baris_hantu(nama_file):
-        print("🧹 Membersihkan baris kosong...")
-        try:
-            doc_bersih = Document(nama_file)
-            for p in list(doc_bersih.paragraphs):
-                if "##HAPUS##" in p.text:
-                    p._element.getparent().remove(p._element)
-                    print("   ✨ Satu baris judul kosong berhasil dihapus.")
-            doc_bersih.save(nama_file)
-        except Exception as e:
-            print(f"⚠️ Gagal membersihkan: {e}")
 
     @staticmethod
     def _update_toc_word(nama_file):
@@ -249,6 +307,42 @@ class ReportService:
             )
 
         return daftar_tugas
+    
+    @staticmethod
+    def _brute_force_delete_empty_rows(output_path):
+        """
+        Fungsi 'Preman': Membuka file hasil generate, masuk ke setiap tabel,
+        dan menghapus paksa baris (row) yang tidak ada teksnya sama sekali.
+        """
+        print(f"🕵️  Memulai operasi pembersihan baris kosong di {output_path}...")
+        try:
+            # Buka ulang dokumen yang baru saja disimpan
+            doc_fix = Document(output_path)
+            
+            total_hapus = 0
+            
+            # Loop semua tabel yang ada di dokumen
+            for table in doc_fix.tables:
+                # Kita looping DARI BAWAH ke ATAS (reversed).
+                # Kenapa? Karena kalau hapus dari atas, indeks barisnya bakal geser dan bikin error.
+                for row in reversed(table.rows):
+                    # Gabungkan teks dari semua sel di baris itu
+                    row_text = ""
+                    for cell in row.cells:
+                        row_text += cell.text.strip()
+                    
+                    # Cek: Kalau gabungan teksnya kosong melompong (cuma spasi/enter doang)
+                    if not row_text:
+                        # HAPUS BARISNYA!
+                        row._element.getparent().remove(row._element)
+                        total_hapus += 1
+
+            # Simpan kembali (Overwrite)
+            doc_fix.save(output_path)
+            print(f"✅ Selesai! Berhasil menghapus {total_hapus} baris hantu yang renggang.")
+            
+        except Exception as e:
+            print(f"⚠️ Gagal melakukan pembersihan: {e}")
 
     def render_report(
         self, template_choice, cover, bab1_items, bab2_items, kesimpulan, output_path
@@ -269,4 +363,6 @@ class ReportService:
         doc.save(output_path)
 
         self._hapus_baris_hantu(output_path)
+        self._hapus_paragraf_kosong_spesifik(output_path)
+        self._brute_force_delete_empty_rows(output_path)
         self._update_toc_word(output_path)
