@@ -9,16 +9,16 @@ class Bab2Tab(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
         self.bab2_items = []
-        self.modul_path_var = tk.StringVar()
-        self.modul_text_cache = ""
-        self.modul_loaded_path = ""
+        self.bab2_modul_path_var = tk.StringVar()
+        self.bab2_modul_text_cache = ""
+        self.bab2_modul_loaded_path = ""
 
-        self.isi_a_text = None
-        self.kode_items = []
-        self.kode_container = None
-        self.kode_listbox = None
-        self.gambar_items = []
-        self.gambar_listbox = None
+        self.bab2_deskripsi_text = None
+        self.bab2_kode_items = []
+        self.bab2_kode_container = None
+        self.bab2_kode_listbox = None
+        self.bab2_gambar_items = []
+        self.bab2_gambar_listbox = None
 
         self._build()
 
@@ -71,13 +71,13 @@ class Bab2Tab(ttk.Frame):
     def fill_test_data(self):
         self.bab2_items = [
             {
-                "judul_sub_bab": "Tugas 1: Validasi Input",
-                "tipe": "2",
-                "isi_a": "Buat program yang menolak input kosong dan menampilkan pesan kesalahan.",
-                "qa_list": [],
-                "kode_files": [],
-                "gambar_paths": [],
-                "analisa": "Validasi memastikan data tidak kosong sebelum diproses lebih lanjut.",
+                "judul_tugas": "Tugas 1: Validasi Input",
+                "tipe_konten": "2",
+                "isi_deskripsi": "Buat program yang menolak input kosong dan menampilkan pesan kesalahan.",
+                "qa_items": [],
+                "kode_items": [],
+                "gambar_items": [],
+                "isi_analisa_tugas": "Validasi memastikan data tidak kosong sebelum diproses lebih lanjut.",
             }
         ]
         self._refresh_bab2_list()
@@ -85,8 +85,13 @@ class Bab2Tab(ttk.Frame):
     def _refresh_bab2_list(self):
         self.bab2_listbox.delete(0, tk.END)
         for i, item in enumerate(self.bab2_items, 1):
-            judul = item.get("judul_sub_bab") or f"Tugas {i}"
-            tipe = "Source Code" if item.get("tipe") == "1" else "Langkah Kerja"
+            judul = item.get("judul_tugas") or item.get("judul_sub_bab") or f"Tugas {i}"
+            tipe_konten = item.get("tipe_konten") or item.get("tipe") or "2"
+            tipe = {
+                "1": "Source Code",
+                "2": "Langkah Kerja",
+                "3": "Q & A",
+            }.get(tipe_konten, "Langkah Kerja")
             self.bab2_listbox.insert(tk.END, f" {i}. {judul.upper()} — [{tipe}]")
 
     def _add_bab2(self):
@@ -122,11 +127,14 @@ class Bab2Tab(ttk.Frame):
         dialog.grab_set()
 
         data = initial.copy() if initial else {}
-        tipe_var = tk.StringVar(value=data.get("tipe", "1"))
-        judul_var = tk.StringVar(value=data.get("judul_sub_bab", ""))
+        tipe_var = tk.StringVar(value=data.get("tipe_konten") or data.get("tipe", "1"))
+        judul_var = tk.StringVar(value=data.get("judul_tugas") or data.get("judul_sub_bab", ""))
+
+        self.bab2_kode_items = data.get("kode_items") or data.get("list_kode") or data.get("kode_files", [])
+        self.bab2_gambar_items = data.get("gambar_items") or data.get("list_gambar") or data.get("gambar_paths", [])
         
         self.qa_rows = [] 
-        qa_initial_data = data.get("qa_list", [])
+        qa_initial_data = data.get("qa_items") or data.get("qa_list", [])
 
         # --- FOOTER NAVIGATION ---
         btn_row = ttk.Frame(dialog, padding=(15, 8))
@@ -138,7 +146,7 @@ class Bab2Tab(ttk.Frame):
         def save():
             langkah_list = []
             if tipe_var.get() == "2":
-                raw_text = self.isi_a_text.get("1.0", "end-1c")
+                raw_text = self.bab2_deskripsi_text.get("1.0", "end-1c")
                 langkah_list = [
                     {"nomor": i, "langkah_kerja": line.strip()}
                     for i, line in enumerate(raw_text.split("\n"), 1)
@@ -151,17 +159,17 @@ class Bab2Tab(ttk.Frame):
                     q = row['q_entry'].get("1.0", "end-1c").strip()
                     a = row['a_entry'].get("1.0", "end-1c").strip()
                     if q or a:
-                        qa_list_final.append({"q": q, "a": a})
+                        qa_list_final.append({"pertanyaan": q, "jawaban": a})
 
             res_val["data"] = {
-                "judul_sub_bab": judul_var.get(),
-                "tipe": tipe_var.get(),
-                "isi_a": self.isi_a_text.get("1.0", "end-1c"),
-                "langkah_list": langkah_list,
-                "qa_list": qa_list_final,
-                "kode_files": self.kode_items,
-                "gambar_paths": self.gambar_items,
-                "analisa": analisa_text.get("1.0", "end-1c") if tipe_var.get() != "3" else ""
+                "judul_tugas": judul_var.get(),
+                "tipe_konten": tipe_var.get(),
+                "isi_deskripsi": self.bab2_deskripsi_text.get("1.0", "end-1c"),
+                "langkah_kerja_items": langkah_list,
+                "qa_items": qa_list_final,
+                "kode_items": self.bab2_kode_items,
+                "gambar_items": self.bab2_gambar_items,
+                "isi_analisa_tugas": analisa_text.get("1.0", "end-1c") if tipe_var.get() != "3" else "",
             }
             dialog.destroy()
 
@@ -192,7 +200,7 @@ class Bab2Tab(ttk.Frame):
 
         self.modul_frame = ttk.Frame(info_frame)
         ttk.Label(self.modul_frame, text="Modul:").pack(side="left")
-        ttk.Entry(self.modul_frame, textvariable=self.modul_path_var, width=20).pack(side="left", padx=5, fill="x", expand=True)
+        ttk.Entry(self.modul_frame, textvariable=self.bab2_modul_path_var, width=20).pack(side="left", padx=5, fill="x", expand=True)
         ttk.Button(self.modul_frame, text="...", width=3, command=self._browse_modul).pack(side="left", padx=2)
         ttk.Button(self.modul_frame, text="Muat", width=5, command=self._load_modul_text).pack(side="left")
 
@@ -200,20 +208,23 @@ class Bab2Tab(ttk.Frame):
         self.content_container.pack(fill="both", expand=True)
 
         # 1. Source Code View
-        self.kode_container = ttk.Frame(self.content_container)
-        self.kode_listbox = tk.Listbox(self.kode_container, height=6, font=("Consolas", 9))
-        self.kode_listbox.pack(side="left", fill="both", expand=True)
-        k_btns = ttk.Frame(self.kode_container)
+        self.bab2_kode_container = ttk.Frame(self.content_container)
+        self.bab2_kode_listbox = tk.Listbox(self.bab2_kode_container, height=6, font=("Consolas", 9))
+        self.bab2_kode_listbox.pack(side="left", fill="both", expand=True)
+        k_btns = ttk.Frame(self.bab2_kode_container)
         k_btns.pack(side="right", padx=(5, 0))
         ttk.Button(k_btns, text="+", width=3, command=self._add_kode_logic).pack(pady=2)
         ttk.Button(k_btns, text="-", width=3, command=self._remove_kode_logic).pack()
 
         # 2. Deskriptif View
         self.langkah_container = ttk.Frame(self.content_container)
-        self.isi_a_text = scrolledtext.ScrolledText(self.langkah_container, height=6, font=("Segoe UI", 9))
-        self.isi_a_text.pack(fill="both", expand=True)
+        self.bab2_deskripsi_text = scrolledtext.ScrolledText(self.langkah_container, height=6, font=("Segoe UI", 9))
+        self.bab2_deskripsi_text.pack(fill="both", expand=True)
+        initial_deskripsi = data.get("isi_deskripsi") or data.get("isi_a", "")
+        if initial_deskripsi:
+            self.bab2_deskripsi_text.insert("1.0", initial_deskripsi)
         ttk.Button(self.langkah_container, text="✨ Generate Langkah (AI)", style="Action.TButton",
-                   command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(fill="x", pady=(4,0))
+                   command=lambda: self._run_langkah_ai(judul_var, self.bab2_deskripsi_text)).pack(fill="x", pady=(4,0))
 
         # 3. Q&A Table (DENGAN PENOMORAN DAN TOMBOL DI BAWAH)
         self.qa_table_container = ttk.Frame(self.content_container)
@@ -299,14 +310,14 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(qa_tools, text="+ Tambah Soal", command=add_qa_row).pack(side="left")
         
         def run_table_ai():
-            if not self.modul_text_cache:
+            if not self.bab2_modul_text_cache:
                 messagebox.showwarning("AI", "Muat modul terlebih dahulu!")
                 return
             for row in self.qa_rows:
                 q_text = row['q_entry'].get("1.0", "end-1c").strip()
                 a_text = row['a_entry'].get("1.0", "end-1c").strip()
                 if q_text and not a_text:
-                    ans, err = self.app.analysis_service.answer_question(q_text, self.modul_text_cache)
+                    ans, err = self.app.analysis_service.answer_question(q_text, self.bab2_modul_text_cache)
                     if not err: 
                         row['a_entry'].delete("1.0", tk.END)
                         row['a_entry'].insert("1.0", ans)
@@ -317,8 +328,8 @@ class Bab2Tab(ttk.Frame):
         self.img_section = ttk.LabelFrame(left_pane, text=" Lampiran Gambar ", padding=8)
         img_main = ttk.Frame(self.img_section)
         img_main.pack(fill="x")
-        self.gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
-        self.gambar_listbox.pack(side="left", fill="both", expand=True)
+        self.bab2_gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
+        self.bab2_gambar_listbox.pack(side="left", fill="both", expand=True)
         g_btns = ttk.Frame(img_main)
         g_btns.pack(side="right", padx=(5, 0))
         ttk.Button(g_btns, text="+", width=3, command=self._add_gambar_logic).pack(pady=2)
@@ -329,12 +340,14 @@ class Bab2Tab(ttk.Frame):
         self.ai_section.pack(fill="both", expand=True)
         analisa_text = scrolledtext.ScrolledText(self.ai_section, font=("Segoe UI", 9), bg="#ffffff")
         analisa_text.pack(fill="both", expand=True, pady=(0, 8))
-        if data.get("analisa"): analisa_text.insert("1.0", data.get("analisa"))
+        initial_analisa = data.get("isi_analisa_tugas") or data.get("isi_analisa") or data.get("analisa", "")
+        if initial_analisa:
+            analisa_text.insert("1.0", initial_analisa)
         
         def run_ai():
             res, err = self.app.analysis_service.generate_analysis(
-                tipe_var.get(), self.isi_a_text.get("1.0", tk.END),
-                self.kode_items, self.gambar_items, self.app.cover_tab.get_template_choice()
+                tipe_var.get(), self.bab2_deskripsi_text.get("1.0", tk.END),
+                self.bab2_kode_items, self.bab2_gambar_items, self.app.cover_tab.get_template_choice()
             )
             if err: messagebox.showerror("AI Error", err)
             else:
@@ -346,7 +359,7 @@ class Bab2Tab(ttk.Frame):
         # --- TOGGLE LOGIC ---
         def toggle_view(*args):
             self.modul_frame.pack_forget()
-            self.kode_container.pack_forget()
+            self.bab2_kode_container.pack_forget()
             self.langkah_container.pack_forget()
             self.qa_table_container.pack_forget()
             self.img_section.pack_forget()
@@ -356,7 +369,7 @@ class Bab2Tab(ttk.Frame):
             val = tipe_var.get()
             if val == "1":
                 right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
-                self.kode_container.pack(fill="both", expand=True)
+                self.bab2_kode_container.pack(fill="both", expand=True)
                 self.img_section.pack(fill="x", pady=(8, 0))
                 self.ai_section.pack(fill="both", expand=True)
             elif val == "2":
@@ -380,7 +393,10 @@ class Bab2Tab(ttk.Frame):
         tipe_var.trace_add("write", toggle_view)
         
         if qa_initial_data:
-            for item in qa_initial_data: add_qa_row(item['q'], item['a'])
+            for item in qa_initial_data:
+                pertanyaan = item.get("pertanyaan") or item.get("q") or ""
+                jawaban = item.get("jawaban") or item.get("a") or ""
+                add_qa_row(pertanyaan, jawaban)
         else: add_qa_row()
 
         toggle_view()
@@ -394,10 +410,10 @@ class Bab2Tab(ttk.Frame):
             filetypes=[("Dokumen", "*.pdf;*.docx")],
         )
         if path:
-            self.modul_path_var.set(path)
+            self.bab2_modul_path_var.set(path)
 
     def _load_modul_text(self):
-        path = self.modul_path_var.get().strip()
+        path = self.bab2_modul_path_var.get().strip()
         if not path:
             messagebox.showwarning("Validasi", "Path file modul belum diisi.")
             return
@@ -405,8 +421,8 @@ class Bab2Tab(ttk.Frame):
         if not text:
             messagebox.showwarning("Modul", "Modul kosong atau gagal dibaca.")
             return
-        self.modul_text_cache = text
-        self.modul_loaded_path = path
+        self.bab2_modul_text_cache = text
+        self.bab2_modul_loaded_path = path
         messagebox.showinfo("Modul", f"Modul berhasil dimuat ({len(text)} karakter).")
 
     def _run_langkah_ai(self, judul_var, target_widget):
@@ -415,19 +431,19 @@ class Bab2Tab(ttk.Frame):
             messagebox.showwarning("Validasi", "Judul sub-bab belum diisi.")
             return
 
-        modul_path = self.modul_path_var.get().strip()
-        if modul_path and modul_path != self.modul_loaded_path:
+        modul_path = self.bab2_modul_path_var.get().strip()
+        if modul_path and modul_path != self.bab2_modul_loaded_path:
             self._load_modul_text()
 
-        image_path = self.gambar_items[0]["path"] if self.gambar_items else None
-        if not self.modul_text_cache and not image_path:
+        image_path = self.bab2_gambar_items[0]["path"] if self.bab2_gambar_items else None
+        if not self.bab2_modul_text_cache and not image_path:
             image_path = filedialog.askopenfilename(
                 title="Pilih Screenshot",
                 filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")],
             )
 
         res, err = self.app.analysis_service.generate_langkah_kerja(
-            judul, self.modul_text_cache, image_path
+            judul, self.bab2_modul_text_cache, image_path
         )
         if err:
             messagebox.showerror("AI Error", err)
@@ -436,19 +452,19 @@ class Bab2Tab(ttk.Frame):
         target_widget.insert("1.0", res)
 
     def _refresh_dialog_lists(self):
-        if self.kode_listbox is not None:
-            self.kode_listbox.delete(0, tk.END)
-            for f in self.kode_items:
-                # Menampilkan Judul (jika ada) atau Nama File asli
-                display_name = f.get("judul") or f.get("nama")
-                self.kode_listbox.insert(tk.END, f"📄 {display_name}")
+        if self.bab2_kode_listbox is not None:
+            self.bab2_kode_listbox.delete(0, tk.END)
+            for f in self.bab2_kode_items:
+                display_name = f.get("judul_kode") or f.get("judul") or f.get("nama_file") or f.get("nama")
+                self.bab2_kode_listbox.insert(tk.END, f"📄 {display_name}")
 
-        if self.gambar_listbox is not None:
-            self.gambar_listbox.delete(0, tk.END)
-            for g in self.gambar_items:
+        if self.bab2_gambar_listbox is not None:
+            self.bab2_gambar_listbox.delete(0, tk.END)
+            for g in self.bab2_gambar_items:
                 name = os.path.basename(g["path"])
-                self.gambar_listbox.insert(
-                    tk.END, f"🖼️ {name} ({g['caption']})"
+                caption = g.get("caption_gambar") or g.get("caption") or ""
+                self.bab2_gambar_listbox.insert(
+                    tk.END, f"🖼️ {name} ({caption})"
                 )
 
     def _add_kode_logic(self):
@@ -510,10 +526,10 @@ class Bab2Tab(ttk.Frame):
                     content = f.read()
                 
                 # Simpan ke list dengan judul kustom
-                self.kode_items.append({
-                    "judul": judul,
-                    "nama": os.path.basename(path),
-                    "isi": content
+                self.bab2_kode_items.append({
+                    "judul_kode": judul,
+                    "nama_file": os.path.basename(path),
+                    "isi_kode": content
                 })
                 self._refresh_dialog_lists()
                 dialog.destroy()
@@ -524,9 +540,9 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(btn_frame, text="Batal", command=dialog.destroy).pack(side="right")
 
     def _remove_kode_logic(self):
-        sel = self.kode_listbox.curselection()
+        sel = self.bab2_kode_listbox.curselection()
         if sel:
-            self.kode_items.pop(sel[0])
+            self.bab2_kode_items.pop(sel[0])
             self._refresh_dialog_lists()
 
     def _add_gambar_logic(self):
@@ -536,13 +552,13 @@ class Bab2Tab(ttk.Frame):
         if path:
             cap = self._prompt_caption()
             if cap is not None:
-                self.gambar_items.append({"path": path, "caption": cap})
+                self.bab2_gambar_items.append({"path": path, "caption_gambar": cap})
                 self._refresh_dialog_lists()
 
     def _remove_gambar_logic(self):
-        sel = self.gambar_listbox.curselection()
+        sel = self.bab2_gambar_listbox.curselection()
         if sel:
-            self.gambar_items.pop(sel[0])
+            self.bab2_gambar_items.pop(sel[0])
             self._refresh_dialog_lists()
 
     def _prompt_caption(self):

@@ -23,8 +23,8 @@ class AnalysisService:
     def concat_kode_for_prompt(kode_items):
         parts = []
         for item in kode_items:
-            name = item.get("nama") or ""
-            content = item.get("isi") or ""
+            name = item.get("nama_file") or item.get("nama") or item.get("judul_kode") or item.get("judul") or ""
+            content = item.get("isi_kode") or item.get("isi") or ""
             header = f"File: {name}" if name else "File"
             parts.append(f"{header}\n{content}")
         return "\n\n".join(parts)
@@ -90,7 +90,13 @@ class AnalysisService:
     def _format_kode_names(kode_items):
         names = []
         for item in kode_items or []:
-            name = (item.get("nama") or "").strip()
+            name = (
+                item.get("nama_file")
+                or item.get("nama")
+                or item.get("judul_kode")
+                or item.get("judul")
+                or ""
+            ).strip()
             if name:
                 names.append(name)
         return ", ".join(names)
@@ -98,33 +104,38 @@ class AnalysisService:
     def _format_bab_items(self, bab_items, label):
         lines = [f"{label}: {len(bab_items)} item"]
         for idx, item in enumerate(bab_items, 1):
-            judul = (item.get("judul_sub_bab") or "").strip()
-            tipe = (item.get("tipe") or "").strip()
+            judul = (item.get("judul_tugas") or item.get("judul_sub_bab") or "").strip()
+            tipe = (item.get("tipe_konten") or item.get("tipe") or "").strip()
             header = f"{idx}. {judul}" if judul else f"{idx}. (tanpa judul)"
             if tipe:
                 header += f" (tipe {tipe})"
             lines.append(header)
 
             if tipe == "1":
-                kode_names = self._format_kode_names(item.get("kode_files", []))
+                kode_names = self._format_kode_names(
+                    item.get("kode_items") or item.get("kode_files", [])
+                )
                 if kode_names:
                     lines.append(f"- kode: {kode_names}")
             if tipe == "2":
-                isi = self._safe_text(item.get("isi_a", ""))
+                isi = self._safe_text(item.get("isi_deskripsi") or item.get("isi_a", ""))
                 if isi:
                     lines.append(f"- isi: {isi}")
             if tipe == "3":
-                qa_list = item.get("qa_list", [])
+                qa_list = item.get("qa_items") or item.get("qa_list", [])
                 qa_parts = []
                 for q_idx, qa in enumerate(qa_list, 1):
-                    q = self._safe_text(qa.get("q", ""), 200)
-                    a = self._safe_text(qa.get("a", ""), 200)
+                    q = self._safe_text(qa.get("pertanyaan") or qa.get("q", ""), 200)
+                    a = self._safe_text(qa.get("jawaban") or qa.get("a", ""), 200)
                     if q or a:
                         qa_parts.append(f"{q_idx}) Q: {q} | A: {a}")
                 if qa_parts:
                     lines.append("- qa: " + " ; ".join(qa_parts))
 
-            analisa = self._safe_text(item.get("analisa", ""), 400)
+            analisa = self._safe_text(
+                item.get("isi_analisa_tugas") or item.get("analisa", ""),
+                400,
+            )
             if analisa:
                 lines.append(f"- analisa: {analisa}")
 

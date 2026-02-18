@@ -216,89 +216,98 @@ class ReportService:
     def build_bab2_context(self, doc, bab2_items):
         daftar_tugas = []
         counter_gbr_bab2 = 1
+
         for item in bab2_items:
-            tipe = item.get("tipe", "1")
+            tipe_konten = item.get("tipe_konten") or item.get("tipe", "1")
+            judul_tugas = item.get("judul_tugas") or item.get("judul_sub_bab", "")
+            isi_deskripsi = item.get("isi_deskripsi") or item.get("isi_point_a") or item.get("isi_a", "")
+            isi_analisa_tugas = item.get("isi_analisa_tugas") or item.get("isi_analisa") or item.get("analisa", "")
+
+            gambar_items_raw = item.get("gambar_items") or item.get("list_gambar") or item.get("gambar_paths", [])
             list_gbr_tgs = []
-            for g in item.get("list_gambar") or item.get("gambar_paths", []):
-                obj = muat_gambar(doc, g.get("path", ""))
+            for gambar in gambar_items_raw:
+                path_gambar = gambar.get("path", "")
+                obj = muat_gambar(doc, path_gambar)
                 if not obj:
                     continue
+                caption_gambar = gambar.get("caption_gambar") or gambar.get("caption", "")
                 list_gbr_tgs.append(
                     {
                         "objek_gambar": obj,
-                        "caption": g.get("caption", ""),
+                        "caption": caption_gambar,
                         "nomor_tampil": counter_gbr_bab2,
                     }
                 )
                 counter_gbr_bab2 += 1
 
+            kode_items_raw = item.get("kode_items") or item.get("list_kode") or item.get("kode_files", [])
             list_kode_final = []
-            if tipe == "1":
-                kode_items = item.get("list_kode") or item.get("kode_files", [])
-                if len(kode_items) > 0:
-                    for i, d in enumerate(kode_items, 1):
-                        nama_tampil = d.get("judul") or d.get("nama", "")
-                        if len(kode_items) > 1:
-                            prefix = "\n" if i > 1 else ""
-                            judul_tampil = RichText(f"{prefix}{i}. {nama_tampil}")
-                        else:
-                            judul_tampil = "##HAPUS##"
-                        list_kode_final.append(
-                            {"judul": judul_tampil, "isi": d.get("isi", "")}
-                        )
+            if tipe_konten == "1" and kode_items_raw:
+                total_kode = len(kode_items_raw)
+                for idx, kode in enumerate(kode_items_raw, 1):
+                    judul_kode = kode.get("judul_kode") or kode.get("judul") or kode.get("nama_file") or kode.get("nama", "")
+                    isi_kode = kode.get("isi_kode") or kode.get("isi", "")
+                    if total_kode > 1:
+                        prefix = "\n" if idx > 1 else ""
+                        judul_tampil = RichText(f"{prefix}{idx}. {judul_kode}")
+                    else:
+                        judul_tampil = "##HAPUS##"
+                    list_kode_final.append({"judul": judul_tampil, "isi": isi_kode})
 
-            qa_list = item.get("qa_list", [])
+            qa_items = item.get("qa_items") or item.get("qa_list", [])
             qa_questions = []
             qa_answers = []
-            for i, qa in enumerate(qa_list, 1):
-                q_text = (qa.get("q") or "").strip()
-                a_text = (qa.get("a") or "").strip()
-                if q_text:
-                    qa_questions.append(f"{i}. {q_text}")
-                if a_text:
-                    qa_answers.append(f"{i}. {a_text}")
+            qa_list_normalized = []
+            for idx, qa in enumerate(qa_items, 1):
+                pertanyaan = (qa.get("pertanyaan") or qa.get("q") or "").strip()
+                jawaban = (qa.get("jawaban") or qa.get("a") or "").strip()
+                if pertanyaan:
+                    qa_questions.append(f"{idx}. {pertanyaan}")
+                if jawaban:
+                    qa_answers.append(f"{idx}. {jawaban}")
+                if pertanyaan or jawaban:
+                    qa_list_normalized.append({"q": pertanyaan, "a": jawaban})
 
-            langkah_list = item.get("langkah_list", [])
-            if not langkah_list and item.get("isi_a"):
-                langkah_list = [
-                    line.strip()
-                    for line in item.get("isi_a", "").split("\n")
-                    if line.strip()
-                ]
+            raw_langkah = item.get("langkah_kerja_items") or item.get("langkah_list") or isi_deskripsi
+            langkah_list = self._normalize_langkah_list(raw_langkah)
 
-            isi_a = item.get("isi_point_a") or item.get("isi_a", "")
-            analisa = item.get("isi_analisa") or item.get("analisa", "")
-            if not langkah_list:
-                langkah_list = self._normalize_langkah_list(item.get("isi_a", ""))
-            if tipe == "3":
+            if tipe_konten == "3":
                 isi_soal = "\n".join(qa_questions)
                 isi_jawaban = "\n".join(qa_answers)
                 label_point_a = "Pertanyaan & Jawaban"
                 isi_point_a = "\n".join(qa_questions)
                 isi_analisa = ""
-            elif tipe == "2":
-                isi_soal = isi_a
-                isi_jawaban = analisa
+            elif tipe_konten == "2":
+                isi_soal = isi_deskripsi
+                isi_jawaban = isi_analisa_tugas
                 label_point_a = "Langkah Kerja"
-                isi_point_a = isi_a
-                isi_analisa = analisa
+                isi_point_a = isi_deskripsi
+                isi_analisa = isi_analisa_tugas
             else:
                 isi_soal = ""
-                isi_jawaban = analisa
+                isi_jawaban = isi_analisa_tugas
                 label_point_a = "Source Code"
                 isi_point_a = ""
-                isi_analisa = analisa
+                isi_analisa = isi_analisa_tugas
 
             daftar_tugas.append(
                 {
-                    "judul_sub_bab": item.get("judul_sub_bab", ""),
-                    "tipe": tipe,
+                    "judul_tugas": judul_tugas,
+                    "tipe_konten": tipe_konten,
+                    "isi_deskripsi": isi_deskripsi,
+                    "isi_analisa_tugas": isi_analisa,
+                    "kode_items": list_kode_final,
+                    "gambar_items": list_gbr_tgs,
+                    "qa_items": qa_list_normalized,
+                    "langkah_kerja_items": langkah_list,
+                    "judul_sub_bab": judul_tugas,
+                    "tipe": tipe_konten,
                     "label_point_a": label_point_a,
                     "isi_point_a": isi_point_a,
                     "list_kode": list_kode_final,
                     "isi_analisa": isi_analisa,
                     "langkah_list": langkah_list,
-                    "qa_list": qa_list,
+                    "qa_list": qa_list_normalized,
                     "isi_soal": isi_soal,
                     "isi_jawaban": isi_jawaban,
                     "ada_gambar": len(list_gbr_tgs) > 0,
