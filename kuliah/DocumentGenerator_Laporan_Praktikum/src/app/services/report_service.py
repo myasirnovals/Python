@@ -358,6 +358,24 @@ class ReportService:
     ):
         template_path = self.resolve_template(template_choice)
         doc = DocxTemplate(template_path)
+
+        formatted_kesimpulan = RichText()
+        if kesimpulan:
+            # 1. Pecah kesimpulan jadi list paragraf
+            baris_kesimpulan = kesimpulan.splitlines()
+            
+            # 2. Tambahkan tab (\t) hanya pada baris yang ada isinya
+            paragraf_baru = []
+            for baris in baris_kesimpulan:
+                isi_baris = baris.strip()
+                if isi_baris:
+                    paragraf_baru.append("\t" + isi_baris)
+            
+            # 3. Gabungkan kembali dengan enter
+            kesimpulan_final = "\n".join(paragraf_baru)
+        else:
+            kesimpulan_final = ""
+
         daftar_sub_bab = self.build_bab1_context(doc, bab1_items)
         daftar_tugas = self.build_bab2_context(doc, bab2_items)
 
@@ -365,7 +383,7 @@ class ReportService:
             **cover,
             "daftar_sub_bab": daftar_sub_bab,
             "daftar_tugas": daftar_tugas,
-            "isi_kesimpulan": kesimpulan,
+            "isi_kesimpulan": kesimpulan_final,
         }
 
         doc.render(context)
