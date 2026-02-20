@@ -1,6 +1,8 @@
 import os
+import sys
 import tkinter as tk
-from tkinter import ttk
+from tkinter import messagebox, simpledialog, ttk
+from PIL import Image, ImageTk
 
 from app.ai_client import GeminiClient
 from app.services.analysis_service import AnalysisService
@@ -14,6 +16,7 @@ from ui.styles import setup_styles
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATES_DIR = os.path.join(BASE_DIR, "..", "templates")
+ASSETS_DIR = os.path.join(BASE_DIR, "..", "assets")
 
 
 class App(tk.Tk):
@@ -48,8 +51,31 @@ class App(tk.Tk):
         self.bab2_tab = None
         self.bab3_tab = None
         self.generate_tab = None
+        self.logo_image = None
 
         self._build_ui()
+
+    def _get_logo_path(self):
+        bundled_base = getattr(sys, "_MEIPASS", None)
+        if bundled_base:
+            bundled_logo = os.path.join(bundled_base, "assets", "logo.jpeg")
+            if os.path.exists(bundled_logo):
+                return bundled_logo
+
+        local_logo = os.path.join(ASSETS_DIR, "logo.jpeg")
+        if os.path.exists(local_logo):
+            return local_logo
+
+        return None
+
+    def _load_logo_image(self):
+        logo_path = self._get_logo_path()
+        if not logo_path:
+            return None
+
+        image = Image.open(logo_path)
+        image = image.resize((48, 48), Image.Resampling.LANCZOS)
+        return ImageTk.PhotoImage(image)
 
     def _build_ui(self):
         self.configure(bg="#f8f9fa")
@@ -58,8 +84,41 @@ class App(tk.Tk):
         main_container = ttk.Frame(self)
         main_container.pack(fill="both", expand=True, padx=15, pady=15)
 
-        header_frame = ttk.Frame(main_container)
+        content_canvas = tk.Canvas(main_container, highlightthickness=0, bg="#f8f9fa")
+        content_scrollbar = ttk.Scrollbar(
+            main_container, orient="vertical", command=content_canvas.yview
+        )
+        content_canvas.configure(yscrollcommand=content_scrollbar.set)
+
+        content_scrollbar.pack(side="right", fill="y")
+        content_canvas.pack(side="left", fill="both", expand=True)
+
+        scrollable_content = ttk.Frame(content_canvas)
+        canvas_window = content_canvas.create_window(
+            (0, 0), window=scrollable_content, anchor="nw"
+        )
+
+        def _on_content_configure(event):
+            content_canvas.configure(scrollregion=content_canvas.bbox("all"))
+
+        def _on_canvas_configure(event):
+            content_canvas.itemconfigure(canvas_window, width=event.width)
+
+        scrollable_content.bind("<Configure>", _on_content_configure)
+        content_canvas.bind("<Configure>", _on_canvas_configure)
+
+        def _on_mousewheel(event):
+            content_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        content_canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        header_frame = ttk.Frame(scrollable_content)
         header_frame.pack(fill="x", pady=(0, 10))
+
+        self.logo_image = self._load_logo_image()
+        if self.logo_image:
+            ttk.Label(header_frame, image=self.logo_image).pack(side="left", padx=(0, 10))
+
         ttk.Label(header_frame, text="Lab Report Generator", style="Header.TLabel").pack(
             side="left"
         )
@@ -69,11 +128,11 @@ class App(tk.Tk):
 
         ttk.Button(
             header_frame,
-            text="DEV: Isi Data",
-            command=self._fill_test_data,
+            text="Input AI_API_KEY",
+            command=self._prompt_api_key,
         ).pack(side="right")
 
-        self.notebook = ttk.Notebook(main_container)
+        self.notebook = ttk.Notebook(scrollable_content)
         self.notebook.pack(fill="both", expand=True)
 
         cover_frame = ttk.Frame(self.notebook)
@@ -94,12 +153,25 @@ class App(tk.Tk):
         self.bab3_tab = Bab3Tab(self, bab3_frame)
         self.generate_tab = GenerateTab(self, generate_frame)
 
-    def _fill_test_data(self):
-        if self.cover_tab:
-            self.cover_tab.fill_test_data()
-        if self.bab1_tab:
-            self.bab1_tab.fill_test_data()
-        if self.bab2_tab:
-            self.bab2_tab.fill_test_data()
-        if self.bab3_tab:
-            self.bab3_tab.fill_test_data()
+    def _prompt_api_key(self):
+        api_key = simpledialog.askstring(
+            "AI API Key",
+            "Masukkan AI_API_KEY (Gemini API Key):",
+            parent=self,
+            show="*",
+        )
+
+        if api_key is None:
+            return
+
+        cleaned_key = api_key.strip()
+        if not cleaned_key:
+            messagebox.showwarning("Input Kosong", "AI_API_KEY tidak boleh kosong.")
+            return
+
+        os.environ["AI_API_KEY"] = cleaned_key
+        os.environ["GEMINI_API_KEY"] = cleaned_key
+        self.ai_client.api_key = cleaned_key
+        self.ai_client.model_name = None
+
+        messagebox.showinfo("Berhasil", "AI_API_KEY berhasil diperbarui untuk sesi ini.")
