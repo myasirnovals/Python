@@ -264,6 +264,10 @@ class ReportService:
                 if pertanyaan:
                     qa_questions.append(f"{idx}. {pertanyaan}")
                 if jawaban:
+                    jawaban = jawaban.replace("**", "").replace("*", "")
+                    jawaban = jawaban.replace("``", "").replace("`", "")
+                    jawaban = jawaban.replace('"', "")
+
                     qa_answers.append(f"{idx}. {jawaban}")
                 if pertanyaan or jawaban:
                     qa_list_normalized.append({"q": pertanyaan, "a": jawaban})
