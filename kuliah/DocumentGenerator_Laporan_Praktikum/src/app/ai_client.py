@@ -12,44 +12,21 @@ class GeminiClient:
     def __init__(self, api_key=API_KEY):
         self.api_key = api_key
         self.model_name = None
-        self.available_models = []
-        self.model_index = -1
-
-    @staticmethod
-    def _prioritize_models(models):
-        """Urutkan model: flash lebih dulu, lalu model Gemini lain."""
-        if not models:
-            return []
-
-        flash_models = [m for m in models if "flash" in m]
-        non_flash_models = [m for m in models if "flash" not in m]
-        return flash_models + non_flash_models
-
-    @staticmethod
-    def _is_busy_response(status_code, payload):
-        if status_code in (429, 503):
-            return True
-
-        if not isinstance(payload, dict):
-            return False
-
-        error = payload.get("error") or {}
-        message = str(error.get("message", "")).lower()
-        status = str(error.get("status", "")).lower()
-
-        busy_keywords = [
-            "resource_exhausted",
-            "rate limit",
-            "quota",
-            "overloaded",
-            "unavailable",
-            "busy",
+        self.priority_models = [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-3-flash-preview",
+            "gemini-2.5-flash-lite",
+            "gemini-2.0-flash-lite",
+            "gemini-flash-lite-latest",
+            "gemini-2.5-pro",
+            "gemini-3-pro-preview"
         ]
-        return any(k in message or k in status for k in busy_keywords)
 
-    def _load_candidate_models(self):
-        """Muat semua model Gemini yang mendukung generateContent."""
+    def get_active_model(self):
+        """Mencari model terbaik dari daftar pilihan yang tersedia di akun Anda."""
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}"
+        print("\n🔍 Mengecek ketersediaan model pilihan...")
         try:
             resp = requests.get(url)
             data = resp.json()
@@ -57,143 +34,122 @@ class GeminiClient:
                 print(f"❌ Error API Key: {data['error']['message']}")
                 return []
 
-            candidates = []
-            for model in data.get("models", []):
-                name = (model.get("name") or "").replace("models/", "")
-                methods = model.get("supportedGenerationMethods") or []
-                if "gemini" not in name:
-                    continue
-                if "embedding" in name:
-                    continue
-                if "generateContent" not in methods:
-                    continue
-                candidates.append(name)
+            available_models = [m["name"].replace("models/", "") for m in data.get("models", [])]
 
-            return self._prioritize_models(candidates)
-        except Exception as e:
-            print(f"❌ Gagal koneksi internet: {e}")
-            return []
+            # Pilih model pertama yang cocok dengan daftar prioritas kita
+            for target in self.priority_models:
+                if target in available_models:
+                    self.model_name = target
+                    print(f"✅ Otak Aktif: {self.model_name}")
+                    return self.model_name
 
-    def _switch_to_next_model(self):
-        """Pindah ke model kandidat berikutnya jika ada."""
-        if not self.available_models:
-            return False
-
-        if self.model_index + 1 >= len(self.available_models):
-            return False
-
-        self.model_index += 1
-        self.model_name = self.available_models[self.model_index]
-        print(f"      🔁 Fallback ke model: {self.model_name}")
-        return True
-
-    def get_active_model(self):
-        """Mencari model Gemini yang HIDUP di akun Anda."""
-        print("\n🔍 Sedang mencari model AI yang aktif...")
-        models = self._load_candidate_models()
-        if not models:
-            print("❌ Tidak ada model Gemini yang ditemukan.")
+            # Fallback jika tidak ada satupun yang cocok
+            if available_models:
+                self.model_name = available_models[0]
+                return self.model_name
+            
             return None
-
-        self.available_models = models
-        self.model_index = 0
-        self.model_name = self.available_models[self.model_index]
-        print(f"✅ Sistem Siap! Menggunakan Otak: {self.model_name}")
-        return self.model_name
+        except Exception as e:
+            print(f"❌ Gagal koneksi: {e}")
+            return None
+    
+    def switch_model(self, prefer_pro=False):
+        """Otomatis pindah ke model berikutnya dalam daftar prioritas jika model saat ini sibuk."""
+        try:
+            # Cari index model saat ini dalam daftar prioritas
+            try:
+                current_idx = self.priority_models.index(self.model_name)
+            except ValueError:
+                current_idx = -1
+            
+            # Ambil model berikutnya (loop kembali ke awal jika sudah di ujung daftar)
+            next_idx = (current_idx + 1) % len(self.priority_models)
+            self.model_name = self.priority_models[next_idx]
+            
+            print(f"🔄 Rotasi Otomatis: Pindah ke {self.model_name}...")
+            return True
+        except:
+            return False
 
     def ask(self, prompt_text, image_path=None):
         if not self.model_name:
             if not self.get_active_model():
                 return "Error: Tidak ada model."
-        headers = {"Content-Type": "application/json"}
 
-        parts = [{"text": prompt_text}]
-
-        # Handle Gambar
-        if image_path and os.path.exists(image_path):
-            try:
-                with open(image_path, "rb") as f:
-                    b64_data = base64.b64encode(f.read()).decode("utf-8")
-                    parts.append(
-                        {
+        # Kita beri kesempatan mencoba lebih banyak (5 kali) 
+        # karena sekarang kita punya banyak model cadangan untuk dicoba satu per satu
+        for attempt in range(5): 
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{self.model_name}:generateContent?key={self.api_key}"
+            )
+            headers = {"Content-Type": "application/json"}
+            
+            # --- [LOGIKA BISNIS ASLI: KONSTRUKSI PARTS] ---
+            parts = [{"text": prompt_text}]
+            if image_path and os.path.exists(image_path):
+                try:
+                    with open(image_path, "rb") as f:
+                        b64_data = base64.b64encode(f.read()).decode("utf-8")
+                        parts.append({
                             "inline_data": {
                                 "mime_type": "image/jpeg",
                                 "data": b64_data,
                             }
-                        }
-                    )
-            except Exception as e:
-                print(f"⚠️ Gagal baca gambar: {e}")
+                        })
+                except Exception as e:
+                    print(f"⚠️ Gagal baca gambar: {e}")
+            
+            payload = {"contents": [{"parts": parts}]}
 
-        payload = {"contents": [{"parts": parts}]}
-
-        # Retry Logic + Fallback Model
-        for i in range(5):
             try:
-                url = (
-                    "https://generativelanguage.googleapis.com/v1beta/models/"
-                    f"{self.model_name}:generateContent?key={self.api_key}"
-                )
-                response = requests.post(url, headers=headers, data=json.dumps(payload))
-                resp_json = {}
-                try:
-                    resp_json = response.json()
-                except Exception:
-                    resp_json = {}
-
+                # Menggunakan timeout agar jika koneksi gantung, sistem bisa langsung rotasi
+                response = requests.post(url, headers=headers, data=json.dumps(payload), timeout=30)
+                
                 if response.status_code == 200:
-                    try:
-                        teks_hasil = resp_json["candidates"][0]["content"]["parts"][0]["text"]
+                    # --- [LOGIKA BISNIS ASLI: PEMBERSIHAN TEKS] ---
+                    # Bagian ini dipertahankan 100% sesuai kode rekan Anda
+                    teks_hasil = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+                    
+                    # 1. Membersihkan tanda kutip & backtick
+                    teks_bersih = teks_hasil.replace("'", "").replace("`", "").strip()
+                    
+                    # 2. Filter anti basa-basi
+                    baris = teks_bersih.split("\n")
+                    if len(baris) > 0:
+                        kata_kunci = ["berikut adalah", "analisa:", "penjelasan:", "berdasarkan gambar"]
+                        baris_pertama_lower = baris[0].lower()
+                        
+                        if any(k in baris_pertama_lower for k in kata_kunci) or baris[0].strip().endswith(":"):
+                            baris = baris[1:]
+                    
+                    teks_final = "\n".join(baris).strip()
+                    return teks_final
 
-                        # --- MEMBERSIHKAN TANDA KUTIP & BACKTICK ---
-                        # Ini akan membuang tanda ' dan ` dari istilah teknis
-                        teks_bersih = teks_hasil.replace("'", "").replace("`", "").strip()
-
-                        # 2. FILTER ANTI BASA-BASI (Hapus kalimat pembuka AI)
-                        baris = teks_bersih.split("\n")
-                        # Jika baris pertama mengandung kata kunci basa-basi, hapus!
-                        if len(baris) > 0:
-                            kata_kunci = [
-                                "berikut adalah",
-                                "analisa:",
-                                "penjelasan:",
-                                "berdasarkan gambar",
-                            ]
-                            baris_pertama_lower = baris[0].lower()
-
-                            # Cek apakah baris pertama itu cuma pengantar?
-                            if any(k in baris_pertama_lower for k in kata_kunci) or baris[0].strip().endswith(
-                                ":"
-                            ):
-                                # Kita buang baris pertama, ambil sisanya
-                                baris = baris[1:]
-
-                        # Gabungkan lagi (Hanya pakai \n satu kali agar RAPAT)
-                        # strip() membuang spasi kosong di awal/akhir sisa teks
-                        teks_final = "\n".join(baris).strip()
-
-                        return teks_final
-                    except Exception:
-                        return "Error: Format jawaban aneh."
-                if self._is_busy_response(response.status_code, resp_json):
-                    if self._switch_to_next_model():
-                        continue
-
-                    wait = (i + 1) * 5
-                    print(f"      ⏳ Server sibuk, menunggu {wait} detik...")
-                    time.sleep(wait)
-                elif response.status_code == 404:
-                    print("      🔄 Model hilang, mencari ulang...")
-                    if not self.get_active_model():
-                        return "Gagal: Model hilang."
-                elif response.status_code in (500, 502):
-                    if self._switch_to_next_model():
-                        continue
-                    wait = (i + 1) * 3
-                    time.sleep(wait)
+                elif response.status_code == 429:
+                    # LOGIKA BARU: Jika sibuk, langsung rotasi ke model berikutnya di list prioritas
+                    print(f"⚠️ Model {self.model_name} sibuk (429). Mencoba rotasi model...")
+                    
+                    # Memanggil fungsi switch_model yang baru (yang memakai list prioritas)
+                    if self.switch_model():
+                        # Tunggu sebentar (sistem tunggu) sebelum mencoba model baru
+                        time.sleep(2)
+                        continue 
+                    else:
+                        # Jika gagal switch, gunakan sistem tunggu lama (fallback)
+                        wait = (attempt + 1) * 5
+                        time.sleep(wait)
+                
                 else:
-                    return f"Gagal API: {response.status_code}"
-            except Exception:
-                time.sleep(2)
+                    # Jika error lain (500, 503, dll), tetap coba rotasi model
+                    print(f"❌ Error API {response.status_code}. Mencoba model lain...")
+                    self.switch_model()
+                    time.sleep(2)
 
-        return "Gagal: Server busy (Give up)."
+            except Exception as e:
+                # Jika terjadi error koneksi, pindah model dan tunggu sebentar
+                print(f"⚠️ Koneksi bermasalah: {e}. Rotasi model...")
+                self.switch_model()
+                time.sleep(2)
+        
+        return "Gagal: Semua model sibuk atau terjadi error berulang."
