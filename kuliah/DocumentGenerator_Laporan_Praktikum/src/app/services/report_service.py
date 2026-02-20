@@ -240,7 +240,22 @@ class ReportService:
             tipe_konten = item.get("tipe_konten") or item.get("tipe", "1")
             judul_tugas = item.get("judul_tugas") or item.get("judul_sub_bab", "")
             isi_deskripsi = item.get("isi_deskripsi") or item.get("isi_point_a") or item.get("isi_a", "")
-            isi_analisa_tugas = item.get("isi_analisa_tugas") or item.get("isi_analisa") or item.get("analisa", "")
+            
+            # --- LOGIKA ANALISA (SISTEM LOOPING LIST BARU - BOLEH DIUBAH) ---
+            raw_analisa_tugas = item.get("isi_analisa_tugas") or item.get("isi_analisa") or item.get("analisa", "")
+            list_paragraf_analisa_tugas = []
+            isi_analisa_final = ""
+
+            if raw_analisa_tugas:
+                # Pecah berdasarkan baris, bersihkan spasi liar
+                paragraphs = [p.strip() for p in raw_analisa_tugas.splitlines() if p.strip()]
+                for p in paragraphs:
+                    # Bersihkan simbol markdown agar teks murni
+                    clean_p = p.replace("**", "").replace("*", "").replace("`", "")
+                    # Tambahkan \t agar menjorok dan simpan ke list
+                    list_paragraf_analisa_tugas.append({"teks": "\t" + clean_p})
+            else:
+                list_paragraf_analisa_tugas = [{"teks": "\tAnalisa belum diisi."}]
 
             gambar_items_raw = item.get("gambar_items") or item.get("list_gambar") or item.get("gambar_paths", [])
             list_gbr_tgs = []
@@ -299,26 +314,26 @@ class ReportService:
                 isi_jawaban = "\n".join(qa_answers)
                 label_point_a = "Pertanyaan & Jawaban"
                 isi_point_a = "\n".join(qa_questions)
-                isi_analisa = ""
+                isi_analisa_final = ""
             elif tipe_konten == "2":
                 isi_soal = isi_deskripsi
-                isi_jawaban = isi_analisa_tugas
+                isi_jawaban = raw_analisa_tugas
                 label_point_a = "Langkah Kerja"
                 isi_point_a = isi_deskripsi
-                isi_analisa = isi_analisa_tugas
+                isi_analisa = raw_analisa_tugas
             else:
                 isi_soal = ""
-                isi_jawaban = isi_analisa_tugas
+                isi_jawaban = raw_analisa_tugas
                 label_point_a = "Source Code"
                 isi_point_a = ""
-                isi_analisa = isi_analisa_tugas
+                isi_analisa_final = raw_analisa_tugas
 
             daftar_tugas.append(
                 {
                     "judul_tugas": judul_tugas,
                     "tipe_konten": tipe_konten,
                     "isi_deskripsi": isi_deskripsi,
-                    "isi_analisa_tugas": isi_analisa,
+                    "list_paragraf_analisa_tugas": list_paragraf_analisa_tugas,
                     "kode_items": list_kode_final,
                     "gambar_items": list_gbr_tgs,
                     "qa_items": qa_list_normalized,
@@ -328,7 +343,7 @@ class ReportService:
                     "label_point_a": label_point_a,
                     "isi_point_a": isi_point_a,
                     "list_kode": list_kode_final,
-                    "isi_analisa": isi_analisa,
+                    "isi_analisa": isi_analisa_final,
                     "langkah_list": langkah_list,
                     "qa_list": qa_list_normalized,
                     "isi_soal": isi_soal,
