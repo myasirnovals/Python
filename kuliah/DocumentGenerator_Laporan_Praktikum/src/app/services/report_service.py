@@ -173,6 +173,22 @@ class ReportService:
                 )
                 counter_gbr_bab1 += 1
 
+            # --- LOGIKA ANALISA (SISTEM LOOPING LIST BARU - BOLEH DIUBAH) ---
+            raw_analisa = item.get("isi_analisa") or item.get("analisa", "")
+            list_paragraf_analisa = []
+            
+            if raw_analisa:
+                # Pecah berdasarkan baris, bersihkan spasi liar
+                paragraphs = [p.strip() for p in raw_analisa.splitlines() if p.strip()]
+                for p in paragraphs:
+                    # Bersihkan simbol markdown agar teks murni
+                    clean_p = p.replace("**", "").replace("*", "").replace("`", "")
+                    # Tambahkan \t agar menjorok dan simpan ke list
+                    list_paragraf_analisa.append({"teks": "\t" + clean_p})
+            else:
+                list_paragraf_analisa = [{"teks": "\tAnalisa belum diisi."}]
+
+            # Masukkan ke dalam daftar_sub_bab
             daftar_sub_bab.append(
                 {
                     "judul_sub_bab": item.get("judul_sub_bab", ""),
@@ -180,8 +196,11 @@ class ReportService:
                     "isi_point_a": isi_a,
                     "langkah_list": langkah_list,
                     "list_gambar": list_gbr,
-                    "isi_analisa": item.get("isi_analisa") or item.get("analisa", ""),
+                    # Gunakan variabel baru ini di template Word Anda
+                    "list_paragraf_analisa": list_paragraf_analisa, 
                     "list_kode": list_kode_final,
+                    # Tetap sertakan isi_analisa original jika masih dibutuhkan di bagian lain
+                    "isi_analisa": raw_analisa, 
                 }
             )
 
