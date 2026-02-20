@@ -1,8 +1,8 @@
 import os
-
-from docx import Document
+import time
 import PyPDF2
 
+from docx import Document
 from app.prompts import build_prompt, instruksi_gaya
 
 
@@ -158,6 +158,8 @@ class AnalysisService:
     def generate_langkah_kerja(self, judul_sub, modul_text, image_path=None):
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
+        
+        time.sleep(1)
 
         instruksi = self._instruksi_kualitas_langkah()
         if modul_text:
@@ -185,14 +187,16 @@ class AnalysisService:
             )
             raw = self.ai_client.ask(prompt, image_path)
 
-        if not raw or "Gagal" in raw:
-            return None, "AI tidak bisa menjawab."
+        if not raw or raw.startswith("Error") or raw.startswith("Gagal"):
+            return None, f"AI gagal merespon: {raw}"
 
         return self.format_langkah_kerja(raw), None
 
     def generate_analysis(self, tipe, isi_a_text, kode_items, gambar_items, template_choice):
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
+
+        time.sleep(1)
 
         isi_a = isi_a_text
         if tipe == "1":
@@ -201,6 +205,9 @@ class AnalysisService:
         prompt = build_prompt(tipe, isi_a, instruksi_gaya())
         image_path = gambar_items[0]["path"] if gambar_items else None
         result = self.ai_client.ask(prompt, image_path)
+
+        if not result or result.startswith("Error") or result.startswith("Gagal"):
+             return None, "Gagal generate analisa."
 
         if template_choice == "1" and result:
             result = result.replace("\n\n", "\n")
