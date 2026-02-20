@@ -12,55 +12,99 @@ class GeminiClient:
     def __init__(self, api_key=API_KEY):
         self.api_key = api_key
         self.model_name = None
+        self.available_models = []
+        self.model_index = -1
 
-    def get_active_model(self):
-        """Mencari model Gemini yang HIDUP di akun Anda."""
+    @staticmethod
+    def _prioritize_models(models):
+        """Urutkan model: flash lebih dulu, lalu model Gemini lain."""
+        if not models:
+            return []
+
+        flash_models = [m for m in models if "flash" in m]
+        non_flash_models = [m for m in models if "flash" not in m]
+        return flash_models + non_flash_models
+
+    @staticmethod
+    def _is_busy_response(status_code, payload):
+        if status_code in (429, 503):
+            return True
+
+        if not isinstance(payload, dict):
+            return False
+
+        error = payload.get("error") or {}
+        message = str(error.get("message", "")).lower()
+        status = str(error.get("status", "")).lower()
+
+        busy_keywords = [
+            "resource_exhausted",
+            "rate limit",
+            "quota",
+            "overloaded",
+            "unavailable",
+            "busy",
+        ]
+        return any(k in message or k in status for k in busy_keywords)
+
+    def _load_candidate_models(self):
+        """Muat semua model Gemini yang mendukung generateContent."""
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}"
-        print("\n🔍 Sedang mencari model AI yang aktif...")
         try:
             resp = requests.get(url)
             data = resp.json()
             if "error" in data:
                 print(f"❌ Error API Key: {data['error']['message']}")
-                return None
+                return []
 
-            calon_model = []
-            for m in data.get("models", []):
-                nama = m["name"].replace("models/", "")
-                if "gemini" in nama and "embedding" not in nama:
-                    calon_model.append(nama)
+            candidates = []
+            for model in data.get("models", []):
+                name = (model.get("name") or "").replace("models/", "")
+                methods = model.get("supportedGenerationMethods") or []
+                if "gemini" not in name:
+                    continue
+                if "embedding" in name:
+                    continue
+                if "generateContent" not in methods:
+                    continue
+                candidates.append(name)
 
-            model_pilihan = None
-            # Cari yang 'flash' dulu
-            for m in calon_model:
-                if "flash" in m:
-                    model_pilihan = m
-                    break
-
-            # Kalau gak ada, ambil sembarang
-            if not model_pilihan and calon_model:
-                model_pilihan = calon_model[0]
-
-            if model_pilihan:
-                self.model_name = model_pilihan
-                print(f"✅ Sistem Siap! Menggunakan Otak: {model_pilihan}")
-                return model_pilihan
-
-            print("❌ Tidak ada model Gemini yang ditemukan.")
-            return None
+            return self._prioritize_models(candidates)
         except Exception as e:
             print(f"❌ Gagal koneksi internet: {e}")
+            return []
+
+    def _switch_to_next_model(self):
+        """Pindah ke model kandidat berikutnya jika ada."""
+        if not self.available_models:
+            return False
+
+        if self.model_index + 1 >= len(self.available_models):
+            return False
+
+        self.model_index += 1
+        self.model_name = self.available_models[self.model_index]
+        print(f"      🔁 Fallback ke model: {self.model_name}")
+        return True
+
+    def get_active_model(self):
+        """Mencari model Gemini yang HIDUP di akun Anda."""
+        print("\n🔍 Sedang mencari model AI yang aktif...")
+        models = self._load_candidate_models()
+        if not models:
+            print("❌ Tidak ada model Gemini yang ditemukan.")
             return None
+
+        self.available_models = models
+        self.model_index = 0
+        self.model_name = self.available_models[self.model_index]
+        print(f"✅ Sistem Siap! Menggunakan Otak: {self.model_name}")
+        return self.model_name
 
     def ask(self, prompt_text, image_path=None):
         if not self.model_name:
             if not self.get_active_model():
                 return "Error: Tidak ada model."
-
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model_name}:generateContent?key={self.api_key}"
-        )
         headers = {"Content-Type": "application/json"}
 
         parts = [{"text": prompt_text}]
@@ -83,15 +127,23 @@ class GeminiClient:
 
         payload = {"contents": [{"parts": parts}]}
 
-        # Retry Logic (Anti-429)
+        # Retry Logic + Fallback Model
         for i in range(5):
             try:
+                url = (
+                    "https://generativelanguage.googleapis.com/v1beta/models/"
+                    f"{self.model_name}:generateContent?key={self.api_key}"
+                )
                 response = requests.post(url, headers=headers, data=json.dumps(payload))
+                resp_json = {}
+                try:
+                    resp_json = response.json()
+                except Exception:
+                    resp_json = {}
+
                 if response.status_code == 200:
                     try:
-                        teks_hasil = response.json()["candidates"][0]["content"]["parts"][0][
-                            "text"
-                        ]
+                        teks_hasil = resp_json["candidates"][0]["content"]["parts"][0]["text"]
 
                         # --- MEMBERSIHKAN TANDA KUTIP & BACKTICK ---
                         # Ini akan membuang tanda ' dan ` dari istilah teknis
@@ -123,7 +175,10 @@ class GeminiClient:
                         return teks_final
                     except Exception:
                         return "Error: Format jawaban aneh."
-                if response.status_code == 429:
+                if self._is_busy_response(response.status_code, resp_json):
+                    if self._switch_to_next_model():
+                        continue
+
                     wait = (i + 1) * 5
                     print(f"      ⏳ Server sibuk, menunggu {wait} detik...")
                     time.sleep(wait)
@@ -131,6 +186,11 @@ class GeminiClient:
                     print("      🔄 Model hilang, mencari ulang...")
                     if not self.get_active_model():
                         return "Gagal: Model hilang."
+                elif response.status_code in (500, 502):
+                    if self._switch_to_next_model():
+                        continue
+                    wait = (i + 1) * 3
+                    time.sleep(wait)
                 else:
                     return f"Gagal API: {response.status_code}"
             except Exception:
