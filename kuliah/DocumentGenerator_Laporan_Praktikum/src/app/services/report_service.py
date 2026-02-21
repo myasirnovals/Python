@@ -276,17 +276,26 @@ class ReportService:
 
             kode_items_raw = item.get("kode_items") or item.get("list_kode") or item.get("kode_files", [])
             list_kode_final = []
+            
             if tipe_konten == "1" and kode_items_raw:
                 total_kode = len(kode_items_raw)
                 for idx, kode in enumerate(kode_items_raw, 1):
-                    judul_kode = kode.get("judul_kode") or kode.get("judul") or kode.get("nama_file") or kode.get("nama", "")
+                    # Ambil nama file dengan prioritas yang konsisten
+                    nama_file = kode.get("judul_kode") or kode.get("judul") or kode.get("nama_file") or kode.get("nama", "")
                     isi_kode = kode.get("isi_kode") or kode.get("isi", "")
+
                     if total_kode > 1:
+                        # Kasus Multiple: Gunakan penomoran dan prefix Enter untuk memutus tabel
                         prefix = "\n" if idx > 1 else ""
-                        judul_tampil = RichText(f"{prefix}{idx}. {judul_kode}")
+                        judul_tampil = f"{prefix}{idx}. {nama_file}"
                     else:
+                        # Kasus Single: Gunakan trik ##HAPUS## agar judul tidak muncul (sama seperti Bab 1)
                         judul_tampil = "##HAPUS##"
-                    list_kode_final.append({"judul": judul_tampil, "isi": isi_kode})
+
+                    list_kode_final.append({
+                        "judul": judul_tampil, 
+                        "isi": isi_kode
+                    })
 
             qa_items = item.get("qa_items") or item.get("qa_list", [])
             qa_questions = []
