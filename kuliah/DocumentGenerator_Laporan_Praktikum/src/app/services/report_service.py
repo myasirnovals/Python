@@ -118,7 +118,7 @@ class ReportService:
             raise FileNotFoundError(template_path)
         return template_path
 
-    def build_bab1_context(self, doc, bab1_items):
+    def build_bab1_context(self, doc, bab1_items, template_choice="1"):
         daftar_sub_bab = []
         counter_gbr_bab1 = 1
         for item in bab1_items:
@@ -183,10 +183,11 @@ class ReportService:
                 for p in paragraphs:
                     # Bersihkan simbol markdown agar teks murni
                     clean_p = p.replace("**", "").replace("*", "").replace("`", "")
-                    # Tambahkan \t agar menjorok dan simpan ke list
-                    list_paragraf_analisa.append({"teks": "\t" + clean_p})
+                    prefix = "\t" if template_choice == "1" else ""
+                    list_paragraf_analisa.append({"teks": prefix + clean_p})
             else:
-                list_paragraf_analisa = [{"teks": "\tAnalisa belum diisi."}]
+                prefix = "\t" if template_choice == "1" else ""
+                list_paragraf_analisa = [{"teks": prefix + "Analisa belum diisi."}]
 
             # Masukkan ke dalam daftar_sub_bab
             daftar_sub_bab.append(
@@ -232,7 +233,7 @@ class ReportService:
                 f"{e}"
             )
 
-    def build_bab2_context(self, doc, bab2_items):
+    def build_bab2_context(self, doc, bab2_items, template_choice="1"):
         daftar_tugas = []
         counter_gbr_bab2 = 1
 
@@ -252,10 +253,11 @@ class ReportService:
                 for p in paragraphs:
                     # Bersihkan simbol markdown agar teks murni
                     clean_p = p.replace("**", "").replace("*", "").replace("`", "")
-                    # Tambahkan \t agar menjorok dan simpan ke list
-                    list_paragraf_analisa_tugas.append({"teks": "\t" + clean_p})
+                    prefix = "\t" if template_choice == "1" else ""
+                    list_paragraf_analisa_tugas.append({"teks": prefix + clean_p})
             else:
-                list_paragraf_analisa_tugas = [{"teks": "\tAnalisa belum diisi."}]
+                prefix = "\t" if template_choice == "1" else ""
+                list_paragraf_analisa_tugas = [{"teks": prefix + "Analisa belum diisi."}]
 
             gambar_items_raw = item.get("gambar_items") or item.get("list_gambar") or item.get("gambar_paths", [])
             list_gbr_tgs = []
@@ -406,18 +408,18 @@ class ReportService:
         template_path = self.resolve_template(template_choice)
         doc = DocxTemplate(template_path)
 
-        formatted_kesimpulan = RichText()
         if kesimpulan:
             list_paragraf_kesimpulan = []
             for p in kesimpulan.splitlines():
                 clean_p = p.strip()
                 if clean_p:
-                    list_paragraf_kesimpulan.append({"teks": "\t" + clean_p})
+                    prefix = "\t" if template_choice == "1" else ""
+                    list_paragraf_kesimpulan.append({"teks": prefix + clean_p})
         else:
             list_paragraf_kesimpulan = [{"teks": "Kesimpulan belum diisi."}]
 
-        daftar_sub_bab = self.build_bab1_context(doc, bab1_items)
-        daftar_tugas = self.build_bab2_context(doc, bab2_items)
+        daftar_sub_bab = self.build_bab1_context(doc, bab1_items, template_choice)
+        daftar_tugas = self.build_bab2_context(doc, bab2_items, template_choice)
 
         context = {
             **cover,

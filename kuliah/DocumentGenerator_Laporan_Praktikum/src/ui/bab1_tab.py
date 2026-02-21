@@ -125,10 +125,30 @@ class Bab1Tab(ttk.Frame):
 
         # Logika Bisnis: Data Awal
         data = initial.copy() if initial else {}
-        tipe_var = tk.StringVar(value=data.get("tipe", "1"))
-        judul_var = tk.StringVar(value=data.get("judul_sub_bab", ""))
-        self.kode_items = data.get("kode_files", [])
-        self.gambar_items = data.get("gambar_paths", [])
+        tipe_var = tk.StringVar(value=data.get("tipe") or data.get("tipe_konten", "1"))
+        judul_var = tk.StringVar(value=data.get("judul_sub_bab") or data.get("judul_tugas", ""))
+        self.kode_items = data.get("list_kode") or data.get("kode_files", [])
+        self.gambar_items = data.get("list_gambar") or data.get("gambar_paths", [])
+
+        initial_isi_a = data.get("isi_a", "")
+        if not initial_isi_a:
+            raw_langkah = data.get("langkah_list") or data.get("langkah_kerja_items")
+            if isinstance(raw_langkah, list):
+                rows = []
+                for idx, item in enumerate(raw_langkah, 1):
+                    if isinstance(item, dict):
+                        nomor = item.get("nomor", idx)
+                        teks = item.get("langkah_kerja", "").strip()
+                    else:
+                        nomor = idx
+                        teks = str(item).strip()
+                    if teks:
+                        rows.append(f"{nomor}. {teks}")
+                initial_isi_a = "\n".join(rows)
+            elif isinstance(raw_langkah, str):
+                initial_isi_a = raw_langkah
+
+        initial_analisa = data.get("isi_analisa") or data.get("analisa", "")
 
         # --- FOOTER NAVIGATION (Statis di bawah) ---
         btn_row = ttk.Frame(dialog, padding=(20, 10))
@@ -236,7 +256,8 @@ class Bab1Tab(ttk.Frame):
         self.langkah_container = ttk.Frame(content_frame)
         self.isi_a_text = scrolledtext.ScrolledText(self.langkah_container, height=6, font=("Segoe UI", 10))
         self.isi_a_text.pack(fill="both", expand=True)
-        if data.get("isi_a"): self.isi_a_text.insert("1.0", data.get("isi_a"))
+        if initial_isi_a:
+            self.isi_a_text.insert("1.0", initial_isi_a)
         ttk.Button(self.langkah_container, text="✨ Generate Langkah Kerja (AI)", style="Action.TButton", 
                    command=lambda: self._run_langkah_ai(judul_var, self.isi_a_text)).pack(fill="x", pady=(5,0))
 
@@ -258,7 +279,8 @@ class Bab1Tab(ttk.Frame):
 
         analisa_text = scrolledtext.ScrolledText(ai_frame, font=("Segoe UI", 10), bg="#ffffff")
         analisa_text.pack(fill="both", expand=True, pady=(0, 10))
-        if data.get("analisa"): analisa_text.insert("1.0", data.get("analisa"))
+        if initial_analisa:
+            analisa_text.insert("1.0", initial_analisa)
 
         def run_ai():
             res, err = self.app.analysis_service.generate_analysis(
