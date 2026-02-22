@@ -119,6 +119,8 @@ class Bab1Tab(ttk.Frame):
         
         # IMK: Ukuran ideal untuk layar laptop menengah (950x600)
         dialog.geometry("980x600")
+        dialog.minsize(860, 540)
+        dialog.resizable(True, True)
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
         dialog.grab_set()
@@ -130,6 +132,7 @@ class Bab1Tab(ttk.Frame):
         self.kode_items = data.get("list_kode") or data.get("kode_files", [])
         self.gambar_items = data.get("list_gambar") or data.get("gambar_paths", [])
 
+        initial_penjelasan = data.get("penjelasan_singkat", "")
         initial_isi_a = data.get("isi_a", "")
         if not initial_isi_a:
             raw_langkah = data.get("langkah_list") or data.get("langkah_kerja_items")
@@ -194,6 +197,7 @@ class Bab1Tab(ttk.Frame):
 
             res_val["data"] = {
                 "judul_sub_bab": judul_var.get(),
+                "penjelasan_singkat": penjelasan_text.get("1.0", "end-1c"),
                 "tipe": tipe_var.get(),
                 "label_point_a": label_a,
                 "list_kode": self.kode_items,
@@ -206,17 +210,48 @@ class Bab1Tab(ttk.Frame):
         ttk.Button(btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save).pack(side="right", padx=5)
         ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
 
-        # --- BODY SPLIT VIEW ---
-        main_container = ttk.Frame(dialog, padding=15)
+        # --- BODY SPLIT VIEW (Scroll + Responsive) ---
+        body_host = ttk.Frame(dialog)
+        body_host.pack(fill="both", expand=True)
+
+        body_canvas = tk.Canvas(body_host, highlightthickness=0, bg="#f8f9fa")
+        body_scrollbar = ttk.Scrollbar(body_host, orient="vertical", command=body_canvas.yview)
+        body_canvas.configure(yscrollcommand=body_scrollbar.set)
+
+        body_scrollbar.pack(side="right", fill="y")
+        body_canvas.pack(side="left", fill="both", expand=True)
+
+        scrollable_body = ttk.Frame(body_canvas, padding=15)
+        body_window = body_canvas.create_window((0, 0), window=scrollable_body, anchor="nw")
+
+        scrollable_body.bind(
+            "<Configure>",
+            lambda e: body_canvas.configure(scrollregion=body_canvas.bbox("all")),
+        )
+        body_canvas.bind(
+            "<Configure>",
+            lambda e: body_canvas.itemconfigure(body_window, width=e.width),
+        )
+
+        def _on_mousewheel(event):
+            body_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        body_canvas.bind("<Enter>", lambda e: body_canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        body_canvas.bind("<Leave>", lambda e: body_canvas.unbind_all("<MouseWheel>"))
+
+        main_container = ttk.Frame(scrollable_body)
         main_container.pack(fill="both", expand=True)
 
+        content_split = ttk.Panedwindow(main_container, orient="horizontal")
+        content_split.pack(fill="both", expand=True)
+
         # Bagian Kiri: Input & Dokumentasi
-        left_pane = ttk.Frame(main_container)
-        left_pane.pack(side="left", fill="both", expand=True, padx=(0, 10))
+        left_pane = ttk.Frame(content_split)
+        content_split.add(left_pane, weight=3)
 
         # Bagian Kanan: Analisa AI
-        right_pane = ttk.Frame(main_container)
-        right_pane.pack(side="right", fill="both", expand=True, padx=(10, 0))
+        right_pane = ttk.Frame(content_split)
+        content_split.add(right_pane, weight=2)
 
         # --- LEFT PANE CONTENT ---
         # 1. Informasi Dasar (Compact)
@@ -225,6 +260,12 @@ class Bab1Tab(ttk.Frame):
 
         ttk.Label(info_frame, text="Judul Sub-Bab:").pack(anchor="w")
         ttk.Entry(info_frame, textvariable=judul_var).pack(fill="x", pady=(2, 5))
+        
+        ttk.Label(info_frame, text="Penjelasan Singkat:").pack(anchor="w")
+        penjelasan_text = tk.Text(info_frame, height=3, font=("Segoe UI", 10), relief="solid", borderwidth=1)
+        penjelasan_text.pack(fill="x", pady=(2, 5))
+        if initial_penjelasan:
+            penjelasan_text.insert("1.0", initial_penjelasan)
 
         type_row = ttk.Frame(info_frame)
         type_row.pack(fill="x", pady=5)

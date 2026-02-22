@@ -122,6 +122,8 @@ class Bab2Tab(ttk.Frame):
         dialog = tk.Toplevel(self)
         dialog.title("Editor Tugas Praktikum")
         dialog.geometry("1020x600")
+        dialog.minsize(900, 560)
+        dialog.resizable(True, True)
         dialog.configure(bg="#f8f9fa")
         dialog.transient(self)
         dialog.grab_set()
@@ -163,6 +165,7 @@ class Bab2Tab(ttk.Frame):
 
             res_val["data"] = {
                 "judul_tugas": judul_var.get(),
+                "penjelasan_singkat": penjelasan_text.get("1.0", "end-1c"),
                 "tipe_konten": tipe_var.get(),
                 "isi_deskripsi": self.bab2_deskripsi_text.get("1.0", "end-1c"),
                 "langkah_kerja_items": langkah_list,
@@ -176,14 +179,44 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(btn_row, text="Simpan Ke Laporan", style="Action.TButton", command=save).pack(side="right", padx=5)
         ttk.Button(btn_row, text="Batal", command=dialog.destroy).pack(side="right")
 
-        # --- BODY CONTAINER ---
-        main_container = ttk.Frame(dialog, padding=12)
+        # --- BODY CONTAINER (Scroll + Responsive) ---
+        body_host = ttk.Frame(dialog)
+        body_host.pack(fill="both", expand=True)
+
+        body_canvas = tk.Canvas(body_host, highlightthickness=0, bg="#f8f9fa")
+        body_scrollbar = ttk.Scrollbar(body_host, orient="vertical", command=body_canvas.yview)
+        body_canvas.configure(yscrollcommand=body_scrollbar.set)
+
+        body_scrollbar.pack(side="right", fill="y")
+        body_canvas.pack(side="left", fill="both", expand=True)
+
+        scrollable_body = ttk.Frame(body_canvas, padding=12)
+        body_window = body_canvas.create_window((0, 0), window=scrollable_body, anchor="nw")
+
+        scrollable_body.bind(
+            "<Configure>",
+            lambda e: body_canvas.configure(scrollregion=body_canvas.bbox("all")),
+        )
+        body_canvas.bind(
+            "<Configure>",
+            lambda e: body_canvas.itemconfigure(body_window, width=e.width),
+        )
+
+        def _on_mousewheel(event):
+            body_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        body_canvas.bind("<Enter>", lambda e: body_canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        body_canvas.bind("<Leave>", lambda e: body_canvas.unbind_all("<MouseWheel>"))
+
+        main_container = ttk.Frame(scrollable_body)
         main_container.pack(fill="both", expand=True)
 
+        # Gunakan frame biasa dengan pack agar kompatibel dengan toggle_view
         left_pane = ttk.Frame(main_container)
-        left_pane.pack(side="left", fill="both", expand=True)
+        left_pane.pack(side="left", fill="both", expand=True, padx=(0, 8))
 
         right_pane = ttk.Frame(main_container)
+        # right_pane akan di-pack/unpack dinamis oleh toggle_view()
 
         # --- LEFT PANE ---
         info_frame = ttk.LabelFrame(left_pane, text=" Konfigurasi Tugas ", padding=8)
@@ -191,6 +224,15 @@ class Bab2Tab(ttk.Frame):
 
         ttk.Label(info_frame, text="Topik Tugas:").pack(anchor="w")
         ttk.Entry(info_frame, textvariable=judul_var).pack(fill="x", pady=(2, 5))
+
+        self.penjelasan_frame = ttk.Frame(info_frame)
+        self.penjelasan_frame.pack(fill="x", pady=(0, 5))
+        ttk.Label(self.penjelasan_frame, text="Penjelasan Singkat:").pack(anchor="w")
+        penjelasan_text = tk.Text(self.penjelasan_frame, height=3, font=("Segoe UI", 9), relief="solid", borderwidth=1)
+        penjelasan_text.pack(fill="x", pady=(2, 0))
+        initial_penjelasan = data.get("penjelasan_singkat", "")
+        if initial_penjelasan:
+            penjelasan_text.insert("1.0", initial_penjelasan)
 
         type_row = ttk.Frame(info_frame)
         type_row.pack(fill="x", pady=2)
@@ -358,6 +400,8 @@ class Bab2Tab(ttk.Frame):
 
         # --- TOGGLE LOGIC ---
         def toggle_view(*args):
+            # Reset semua container dinamis
+            self.penjelasan_frame.pack_forget()
             self.modul_frame.pack_forget()
             self.bab2_kode_container.pack_forget()
             self.langkah_container.pack_forget()
@@ -367,27 +411,24 @@ class Bab2Tab(ttk.Frame):
             right_pane.pack_forget()
 
             val = tipe_var.get()
-            if val == "1":
-                right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
+            if val == "1":  # Source Code
+                self.penjelasan_frame.pack(fill="x", pady=(0, 5), before=type_row)
                 self.bab2_kode_container.pack(fill="both", expand=True)
                 self.img_section.pack(fill="x", pady=(8, 0))
+                right_pane.pack(side="right", fill="both", expand=True)
                 self.ai_section.pack(fill="both", expand=True)
-            elif val == "2":
-                right_pane.pack(side="right", fill="both", expand=True, padx=(8, 0))
+            elif val == "2":  # Langkah Kerja
+                self.penjelasan_frame.pack(fill="x", pady=(0, 5), before=type_row)
                 self.modul_frame.pack(fill="x", pady=4)
                 self.langkah_container.pack(fill="both", expand=True)
                 self.img_section.pack(fill="x", pady=(8, 0))
+                right_pane.pack(side="right", fill="both", expand=True)
                 self.ai_section.pack(fill="both", expand=True)
-            elif val == "3":
+            elif val == "3":  # Q & A
                 self.modul_frame.pack(fill="x", pady=4)
                 self.qa_table_container.pack(fill="both", expand=True)
                 # Sinkronisasi ulang lebar setelah panel Q&A muncul
-                dialog.after(100, lambda: qa_canvas.event_generate("<Configure>"))
-
-                # --- PERBAIKAN DI SINI ---
-                # Memaksa Tkinter memproses semua antrean visual
                 dialog.update_idletasks()
-                # Memicu fungsi sync_width secara manual agar kolom langsung melebar
                 qa_canvas.event_generate("<Configure>")
 
         tipe_var.trace_add("write", toggle_view)
