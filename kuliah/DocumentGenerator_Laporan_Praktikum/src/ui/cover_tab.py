@@ -62,14 +62,14 @@ class CoverTab(ttk.Frame):
         
         # Radio Button 1
         ttk.Radiobutton(
-            group3, text="Gaya Rapat (V1)", variable=self.template_choice, value="1"
+            group3, text="Nur Faid Prasetyo", variable=self.template_choice, value="1"
         ).grid(
             row=0, column=1, sticky="w", padx=5 # pady dihapus
         )
         
         # Radio Button 2
         ttk.Radiobutton(
-            group3, text="Gaya Renggang (V2)", variable=self.template_choice, value="2"
+            group3, text="Astriani Komeri", variable=self.template_choice, value="2"
         ).grid(
             row=0, column=2, sticky="w", padx=5 # pady dihapus
         )
