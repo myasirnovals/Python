@@ -73,6 +73,13 @@ class CoverTab(ttk.Frame):
         ).grid(
             row=0, column=2, sticky="w", padx=5 # pady dihapus
         )
+        
+        # Radio Button 3
+        ttk.Radiobutton(
+            group3, text="Sri Akmaliatul Maulani", variable=self.template_choice, value="3"
+        ).grid(
+            row=0, column=3, sticky="w", padx=5 # pady dihapus
+        )
 
     def get_cover_data(self):
         return {key: var.get().strip() for key, var in self.cover_vars.items()}
