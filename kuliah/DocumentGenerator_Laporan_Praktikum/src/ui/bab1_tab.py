@@ -10,9 +10,6 @@ class Bab1Tab(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
         self.bab1_items = []
-        self.modul_path_var = tk.StringVar()
-        self.modul_text_cache = ""
-        self.modul_loaded_path = ""
 
         self.isi_a_text = None
         self.kode_items = []
@@ -283,9 +280,16 @@ class Bab1Tab(ttk.Frame):
             if not judul:
                 messagebox.showwarning("Validasi", "Isi Judul Sub-Bab terlebih dahulu agar AI memahami konteks.")
                 return
+
+            modul_text = self.app.cover_tab.get_modul_text()
+            if not modul_text:
+                messagebox.showwarning("Validasi", "Input file modul terlebih dahulu di tab Cover.")
+                return
             
-            # Memanggil fungsi AI (asumsi fungsi generate_penjelasan tersedia di analysis_service)
-            res, err = self.app.analysis_service.generate_penjelasan_singkat(judul)
+            res, err = self.app.analysis_service.generate_penjelasan_singkat(
+                judul,
+                modul_text,
+            )
             if err:
                 messagebox.showerror("AI Error", err)
             else:
@@ -295,13 +299,6 @@ class Bab1Tab(ttk.Frame):
         ttk.Button(action_row, text="✨ Penjelasan AI", style="Action.TButton", 
                    command=run_penjelasan_ai).pack(side="right")
         
-        # Widget Modul (Logika Bisnis Asli)
-        modul_frame = ttk.Frame(info_frame)
-        ttk.Label(modul_frame, text="File Modul:").pack(side="left")
-        ttk.Entry(modul_frame, textvariable=self.modul_path_var, width=30).pack(side="left", padx=5, fill="x", expand=True)
-        ttk.Button(modul_frame, text="...", width=3, command=self._browse_modul).pack(side="left", padx=2)
-        ttk.Button(modul_frame, text="Muat", width=5, command=self._load_modul_text).pack(side="left")
-
         # 2. Input Area (Dinamis)
         content_frame = ttk.LabelFrame(left_pane, text=" Isi Konten ", padding=10)
         content_frame.pack(fill="both", expand=True)
@@ -359,15 +356,12 @@ class Bab1Tab(ttk.Frame):
 
         # --- LOGIKA TAMPILAN (Toggle) ---
         def toggle_view(*args):
-            modul_frame.pack_forget()
             self.kode_container.pack_forget()
             self.langkah_container.pack_forget()
 
             if tipe_var.get() == "1":
-                modul_frame.pack(fill="x", pady=(5,0))
                 self.kode_container.pack(fill="both", expand=True)
             else:
-                modul_frame.pack(fill="x", pady=(5,0))
                 self.langkah_container.pack(fill="both", expand=True)
 
         tipe_var.trace_add("write", toggle_view)
@@ -377,46 +371,23 @@ class Bab1Tab(ttk.Frame):
         self.wait_window(dialog)
         return res_val["data"]
 
-    def _browse_modul(self):
-        path = filedialog.askopenfilename(
-            title="Pilih File Modul",
-            filetypes=[("Dokumen", "*.pdf;*.docx")],
-        )
-        if path:
-            self.modul_path_var.set(path)
-
-    def _load_modul_text(self):
-        path = self.modul_path_var.get().strip()
-        if not path:
-            messagebox.showwarning("Validasi", "Path file modul belum diisi.")
-            return
-        text = self.app.analysis_service.read_modul_text(path)
-        if not text:
-            messagebox.showwarning("Modul", "Modul kosong atau gagal dibaca.")
-            return
-        self.modul_text_cache = text
-        self.modul_loaded_path = path
-        messagebox.showinfo("Modul", f"Modul berhasil dimuat ({len(text)} karakter).")
-
     def _run_langkah_ai(self, judul_var, target_widget):
         judul = judul_var.get().strip()
         if not judul:
             messagebox.showwarning("Validasi", "Judul sub-bab belum diisi.")
             return
 
-        modul_path = self.modul_path_var.get().strip()
-        if modul_path and modul_path != self.modul_loaded_path:
-            self._load_modul_text()
+        modul_text = self.app.cover_tab.get_modul_text()
 
         image_path = self.gambar_items[0]["path"] if self.gambar_items else None
-        if not self.modul_text_cache and not image_path:
+        if not modul_text and not image_path:
             image_path = filedialog.askopenfilename(
                 title="Pilih Screenshot",
                 filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")],
             )
 
         res, err = self.app.analysis_service.generate_langkah_kerja(
-            judul, self.modul_text_cache, image_path
+            judul, modul_text, image_path
         )
         if err:
             messagebox.showerror("AI Error", err)

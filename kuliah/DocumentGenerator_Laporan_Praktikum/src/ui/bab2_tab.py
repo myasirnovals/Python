@@ -9,9 +9,6 @@ class Bab2Tab(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
         self.bab2_items = []
-        self.bab2_modul_path_var = tk.StringVar()
-        self.bab2_modul_text_cache = ""
-        self.bab2_modul_loaded_path = ""
 
         self.bab2_deskripsi_text = None
         self.bab2_kode_items = []
@@ -248,7 +245,16 @@ class Bab2Tab(ttk.Frame):
             if not judul:
                 messagebox.showwarning("Validasi", "Isi Topik Tugas terlebih dahulu.")
                 return
-            res, err = self.app.analysis_service.generate_penjelasan_singkat(judul)
+
+            modul_text = self.app.cover_tab.get_modul_text()
+            if not modul_text:
+                messagebox.showwarning("Validasi", "Input file modul terlebih dahulu di tab Cover.")
+                return
+
+            res, err = self.app.analysis_service.generate_penjelasan_singkat(
+                judul,
+                modul_text,
+            )
             if err: messagebox.showerror("AI Error", err)
             else:
                 penjelasan_text.delete("1.0", tk.END)
@@ -257,12 +263,6 @@ class Bab2Tab(ttk.Frame):
         # Simpan ke variabel self agar bisa di-hide/show di toggle_view
         self.btn_ai_penjelasan = ttk.Button(action_row, text="✨ Penjelasan AI", style="Action.TButton", 
                                            command=run_penjelasan_ai)
-
-        self.modul_frame = ttk.Frame(info_frame)
-        ttk.Label(self.modul_frame, text="Modul:").pack(side="left")
-        ttk.Entry(self.modul_frame, textvariable=self.bab2_modul_path_var).pack(side="left", padx=5, fill="x", expand=True)
-        ttk.Button(self.modul_frame, text="...", width=3, command=self._browse_modul).pack(side="left", padx=2)
-        ttk.Button(self.modul_frame, text="Muat", width=5, command=self._load_modul_text).pack(side="left")
 
         self.content_container = ttk.LabelFrame(left_pane, text=" Isi Konten ", padding=8)
         self.content_container.pack(fill="both", expand=True)
@@ -370,14 +370,15 @@ class Bab2Tab(ttk.Frame):
         ttk.Button(qa_tools, text="+ Tambah Soal", command=add_qa_row).pack(side="left")
         
         def run_table_ai():
-            if not self.bab2_modul_text_cache:
-                messagebox.showwarning("AI", "Muat modul terlebih dahulu!")
+            modul_text = self.app.cover_tab.get_modul_text()
+            if not modul_text:
+                messagebox.showwarning("AI", "Input file modul terlebih dahulu di tab Cover!")
                 return
             for row in self.qa_rows:
                 q_text = row['q_entry'].get("1.0", "end-1c").strip()
                 a_text = row['a_entry'].get("1.0", "end-1c").strip()
                 if q_text and not a_text:
-                    ans, err = self.app.analysis_service.answer_question(q_text, self.bab2_modul_text_cache)
+                    ans, err = self.app.analysis_service.answer_question(q_text, modul_text)
                     if not err: 
                         row['a_entry'].delete("1.0", tk.END)
                         row['a_entry'].insert("1.0", ans)
@@ -422,7 +423,6 @@ class Bab2Tab(ttk.Frame):
             self.penjelasan_frame.pack_forget()
             self.btn_ai_penjelasan.pack_forget()
             action_row.pack_forget()
-            self.modul_frame.pack_forget()
             
             # 2. Sembunyikan elemen konten (Bawah)
             self.bab2_kode_container.pack_forget()
@@ -439,9 +439,8 @@ class Bab2Tab(ttk.Frame):
                 self.penjelasan_frame.pack(fill="x") # Munculkan Penjelasan Singkat
                 self.btn_ai_penjelasan.pack(side="right") # Munculkan Tombol AI
             
-            # Action row dan Modul selalu muncul
+            # Action row selalu muncul
             action_row.pack(fill="x", pady=5)
-            self.modul_frame.pack(fill="x", pady=(5, 10))
 
             # 4. Atur Layout Konten
             if val == "1":  # Source Code
@@ -474,46 +473,23 @@ class Bab2Tab(ttk.Frame):
         self.wait_window(dialog)
         return res_val["data"]
 
-    def _browse_modul(self):
-        path = filedialog.askopenfilename(
-            title="Pilih File Modul",
-            filetypes=[("Dokumen", "*.pdf;*.docx")],
-        )
-        if path:
-            self.bab2_modul_path_var.set(path)
-
-    def _load_modul_text(self):
-        path = self.bab2_modul_path_var.get().strip()
-        if not path:
-            messagebox.showwarning("Validasi", "Path file modul belum diisi.")
-            return
-        text = self.app.analysis_service.read_modul_text(path)
-        if not text:
-            messagebox.showwarning("Modul", "Modul kosong atau gagal dibaca.")
-            return
-        self.bab2_modul_text_cache = text
-        self.bab2_modul_loaded_path = path
-        messagebox.showinfo("Modul", f"Modul berhasil dimuat ({len(text)} karakter).")
-
     def _run_langkah_ai(self, judul_var, target_widget):
         judul = judul_var.get().strip()
         if not judul:
             messagebox.showwarning("Validasi", "Judul sub-bab belum diisi.")
             return
 
-        modul_path = self.bab2_modul_path_var.get().strip()
-        if modul_path and modul_path != self.bab2_modul_loaded_path:
-            self._load_modul_text()
+        modul_text = self.app.cover_tab.get_modul_text()
 
         image_path = self.bab2_gambar_items[0]["path"] if self.bab2_gambar_items else None
-        if not self.bab2_modul_text_cache and not image_path:
+        if not modul_text and not image_path:
             image_path = filedialog.askopenfilename(
                 title="Pilih Screenshot",
                 filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")],
             )
 
         res, err = self.app.analysis_service.generate_langkah_kerja(
-            judul, self.bab2_modul_text_cache, image_path
+            judul, modul_text, image_path
         )
         if err:
             messagebox.showerror("AI Error", err)

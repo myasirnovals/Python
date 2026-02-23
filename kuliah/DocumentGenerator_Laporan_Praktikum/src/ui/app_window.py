@@ -1,7 +1,7 @@
 import os
 import sys
 import tkinter as tk
-from tkinter import messagebox, simpledialog, ttk
+from tkinter import ttk
 from PIL import Image, ImageTk
 
 from app.ai_client import GeminiClient
@@ -123,14 +123,8 @@ class App(tk.Tk):
             side="left"
         )
         ttk.Label(
-            header_frame, text="v3.10.1 Beta", foreground="#6c757d"
+            header_frame, text="v4.0.0 Beta", foreground="#6c757d"
         ).pack(side="left", padx=10, pady=(5, 0))
-
-        ttk.Button(
-            header_frame,
-            text="Input AI_API_KEY",
-            command=self._prompt_api_key,
-        ).pack(side="right")
 
         self.notebook = ttk.Notebook(scrollable_content)
         self.notebook.pack(fill="both", expand=True)
@@ -153,25 +147,3 @@ class App(tk.Tk):
         self.bab3_tab = Bab3Tab(self, bab3_frame)
         self.generate_tab = GenerateTab(self, generate_frame)
 
-    def _prompt_api_key(self):
-        api_key = simpledialog.askstring(
-            "AI API Key",
-            "Masukkan AI_API_KEY (Gemini API Key):",
-            parent=self,
-            show="*",
-        )
-
-        if api_key is None:
-            return
-
-        cleaned_key = api_key.strip()
-        if not cleaned_key:
-            messagebox.showwarning("Input Kosong", "AI_API_KEY tidak boleh kosong.")
-            return
-
-        os.environ["AI_API_KEY"] = cleaned_key
-        os.environ["GEMINI_API_KEY"] = cleaned_key
-        self.ai_client.api_key = cleaned_key
-        self.ai_client.model_name = None
-
-        messagebox.showinfo("Berhasil", "AI_API_KEY berhasil diperbarui untuk sesi ini.")

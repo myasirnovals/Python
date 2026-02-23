@@ -1,9 +1,15 @@
 import os
+import re
 import time
 import PyPDF2
 
 from docx import Document
 from app.prompts import build_prompt, instruksi_gaya
+
+try:
+    import win32com.client as win32
+except Exception:  # pragma: no cover - optional dependency
+    win32 = None
 
 
 class AnalysisService:
@@ -31,7 +37,7 @@ class AnalysisService:
 
     @staticmethod
     def read_modul_text(path_file):
-        """Membaca teks dari file PDF atau DOCX."""
+        """Membaca teks dari file PDF, DOCX, atau DOC."""
         if not path_file or not os.path.exists(path_file):
             return ""
 
@@ -47,8 +53,25 @@ class AnalysisService:
                 doc = Document(path_file)
                 for para in doc.paragraphs:
                     text += para.text + "\n"
+            elif ext == "doc":
+                if win32 is None:
+                    print("⚠️ pywin32 tidak tersedia untuk membaca file DOC.")
+                    return ""
+                word_app = None
+                doc_obj = None
+                try:
+                    word_app = win32.Dispatch("Word.Application")
+                    word_app.Visible = False
+                    word_app.DisplayAlerts = False
+                    doc_obj = word_app.Documents.Open(os.path.abspath(path_file))
+                    text = doc_obj.Content.Text or ""
+                finally:
+                    if doc_obj is not None:
+                        doc_obj.Close(False)
+                    if word_app is not None:
+                        word_app.Quit()
             else:
-                print("⚠️ Format modul tidak didukung (Gunakan PDF/DOCX).")
+                print("⚠️ Format modul tidak didukung (Gunakan PDF/DOC/DOCX).")
             return text
         except Exception as e:
             print(f"⚠️ Gagal membaca modul: {e}")
@@ -85,6 +108,42 @@ class AnalysisService:
         if len(cleaned) <= max_len:
             return cleaned
         return cleaned[:max_len].rstrip() + "..."
+
+    @staticmethod
+    def _clean_single_paragraph(text):
+        if not text:
+            return ""
+        return " ".join(str(text).replace("\n", " ").split()).strip()
+
+    @staticmethod
+    def _split_sentences(text):
+        cleaned = AnalysisService._clean_single_paragraph(text)
+        if not cleaned:
+            return []
+
+        parts = re.split(r"(?<=[.!?])\s+", cleaned)
+        sentences = []
+        for part in parts:
+            sentence = part.strip()
+            if not sentence:
+                continue
+            if sentence[-1] not in ".!?":
+                sentence += "."
+            sentences.append(sentence)
+        return sentences
+
+    @staticmethod
+    def _coerce_five_sentences(text):
+        sentences = AnalysisService._split_sentences(text)
+        if not sentences:
+            return ""
+
+        if len(sentences) >= 5:
+            return " ".join(sentences[:5])
+
+        while len(sentences) < 5:
+            sentences.append(sentences[-1])
+        return " ".join(sentences[:5])
 
     @staticmethod
     def _format_kode_names(kode_items):
@@ -191,6 +250,54 @@ class AnalysisService:
             return None, f"AI gagal merespon: {raw}"
 
         return self.format_langkah_kerja(raw), None
+
+    def generate_penjelasan_singkat(self, judul_sub, modul_text):
+        if not self.ensure_ready():
+            return None, "AI tidak bisa connect. Periksa API key."
+        if not judul_sub or not str(judul_sub).strip():
+            return None, "Judul sub-bab/topik tugas belum diisi."
+        if not modul_text or not str(modul_text).strip():
+            return None, "Modul belum dimuat. Muat file modul terlebih dahulu."
+
+        judul = str(judul_sub).strip()
+        modul_ringkas = self._safe_text(modul_text, max_len=12000)
+
+        prompt = (
+            "Peran: Asisten akademik penyusun laporan praktikum.\n"
+            f"Fokus topik: {judul}\n\n"
+            "Sumber utama (modul):\n"
+            f"{modul_ringkas}\n\n"
+            "Instruksi WAJIB:\n"
+            "1. Tulis tepat 1 paragraf.\n"
+            "2. Tulis tepat 5 kalimat.\n"
+            "3. Semua isi harus relevan langsung dengan fokus topik.\n"
+            "4. Gunakan hanya informasi dari sumber utama; jangan halusinasi.\n"
+            "5. Gunakan Bahasa Indonesia formal, jelas, dan ringkas.\n"
+            "6. Dilarang bullet list, nomor, atau judul tambahan.\n"
+        )
+
+        result = self.ai_client.ask(prompt)
+        if not result or result.startswith("Error") or result.startswith("Gagal"):
+            return None, "Gagal generate penjelasan singkat."
+
+        normalized = self._clean_single_paragraph(result)
+        sentence_count = len(self._split_sentences(normalized))
+
+        if sentence_count != 5:
+            repair_prompt = (
+                "Perbaiki teks berikut menjadi tepat 1 paragraf berisi tepat 5 kalimat.\n"
+                "Jangan menambah fakta baru di luar teks yang diberikan.\n\n"
+                f"Teks:\n{normalized}\n"
+            )
+            repaired = self.ai_client.ask(repair_prompt)
+            if repaired and not repaired.startswith("Error") and not repaired.startswith("Gagal"):
+                normalized = self._clean_single_paragraph(repaired)
+
+        final_text = self._coerce_five_sentences(normalized)
+        if not final_text:
+            return None, "Gagal memformat penjelasan singkat."
+
+        return final_text, None
 
     def generate_analysis(self, tipe, isi_a_text, kode_items, gambar_items, template_choice):
         if not self.ensure_ready():
