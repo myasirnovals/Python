@@ -219,30 +219,48 @@ class Bab2Tab(ttk.Frame):
         # right_pane akan di-pack/unpack dinamis oleh toggle_view()
 
         # --- LEFT PANE ---
-        info_frame = ttk.LabelFrame(left_pane, text=" Konfigurasi Tugas ", padding=8)
+        info_frame = ttk.LabelFrame(left_pane, text=" Konfigurasi Tugas ", padding=10)
         info_frame.pack(fill="x", pady=(0, 8))
 
         ttk.Label(info_frame, text="Topik Tugas:").pack(anchor="w")
-        ttk.Entry(info_frame, textvariable=judul_var).pack(fill="x", pady=(2, 5))
+        ttk.Entry(info_frame, textvariable=judul_var).pack(fill="x", pady=(2, 8))
 
+        # 2. Penjelasan Singkat (Jangan di-pack di sini)
         self.penjelasan_frame = ttk.Frame(info_frame)
-        self.penjelasan_frame.pack(fill="x", pady=(0, 5))
         ttk.Label(self.penjelasan_frame, text="Penjelasan Singkat:").pack(anchor="w")
-        penjelasan_text = tk.Text(self.penjelasan_frame, height=3, font=("Segoe UI", 9), relief="solid", borderwidth=1)
-        penjelasan_text.pack(fill="x", pady=(2, 0))
+        penjelasan_text = tk.Text(self.penjelasan_frame, height=3, font=("Segoe UI", 10), relief="solid", borderwidth=1)
+        penjelasan_text.pack(fill="x", pady=(2, 8))
         initial_penjelasan = data.get("penjelasan_singkat", "")
         if initial_penjelasan:
             penjelasan_text.insert("1.0", initial_penjelasan)
 
-        type_row = ttk.Frame(info_frame)
-        type_row.pack(fill="x", pady=2)
-        ttk.Radiobutton(type_row, text="Source Code", variable=tipe_var, value="1").pack(side="left")
-        ttk.Radiobutton(type_row, text="Langkah Kerja", variable=tipe_var, value="2").pack(side="left", padx=10)
-        ttk.Radiobutton(type_row, text="Q & A", variable=tipe_var, value="3").pack(side="left")
+        action_row = ttk.Frame(info_frame)
+
+        type_area = ttk.Frame(action_row)
+        type_area.pack(side="left")
+        ttk.Label(type_area, text="Tipe Konten:").pack(side="left")
+        ttk.Radiobutton(type_area, text="Source Code", variable=tipe_var, value="1").pack(side="left", padx=(10, 5))
+        ttk.Radiobutton(type_area, text="Langkah Kerja", variable=tipe_var, value="2").pack(side="left", padx=5)
+        ttk.Radiobutton(type_area, text="Q & A", variable=tipe_var, value="3").pack(side="left", padx=5)
+        
+        def run_penjelasan_ai():
+            judul = judul_var.get().strip()
+            if not judul:
+                messagebox.showwarning("Validasi", "Isi Topik Tugas terlebih dahulu.")
+                return
+            res, err = self.app.analysis_service.generate_penjelasan_singkat(judul)
+            if err: messagebox.showerror("AI Error", err)
+            else:
+                penjelasan_text.delete("1.0", tk.END)
+                penjelasan_text.insert("1.0", res)
+
+        # Simpan ke variabel self agar bisa di-hide/show di toggle_view
+        self.btn_ai_penjelasan = ttk.Button(action_row, text="✨ Penjelasan AI", style="Action.TButton", 
+                                           command=run_penjelasan_ai)
 
         self.modul_frame = ttk.Frame(info_frame)
         ttk.Label(self.modul_frame, text="Modul:").pack(side="left")
-        ttk.Entry(self.modul_frame, textvariable=self.bab2_modul_path_var, width=20).pack(side="left", padx=5, fill="x", expand=True)
+        ttk.Entry(self.modul_frame, textvariable=self.bab2_modul_path_var).pack(side="left", padx=5, fill="x", expand=True)
         ttk.Button(self.modul_frame, text="...", width=3, command=self._browse_modul).pack(side="left", padx=2)
         ttk.Button(self.modul_frame, text="Muat", width=5, command=self._load_modul_text).pack(side="left")
 
@@ -400,9 +418,13 @@ class Bab2Tab(ttk.Frame):
 
         # --- TOGGLE LOGIC ---
         def toggle_view(*args):
-            # Reset semua container dinamis
+            # 1. Sembunyikan elemen dinamis di bagian Info (Atas)
             self.penjelasan_frame.pack_forget()
+            self.btn_ai_penjelasan.pack_forget()
+            action_row.pack_forget()
             self.modul_frame.pack_forget()
+            
+            # 2. Sembunyikan elemen konten (Bawah)
             self.bab2_kode_container.pack_forget()
             self.langkah_container.pack_forget()
             self.qa_table_container.pack_forget()
@@ -411,23 +433,30 @@ class Bab2Tab(ttk.Frame):
             right_pane.pack_forget()
 
             val = tipe_var.get()
+            
+            # 3. Atur Layout Atas (Khusus Q&A akan melewati bagian ini)
+            if val != "3": 
+                self.penjelasan_frame.pack(fill="x") # Munculkan Penjelasan Singkat
+                self.btn_ai_penjelasan.pack(side="right") # Munculkan Tombol AI
+            
+            # Action row dan Modul selalu muncul
+            action_row.pack(fill="x", pady=5)
+            self.modul_frame.pack(fill="x", pady=(5, 10))
+
+            # 4. Atur Layout Konten
             if val == "1":  # Source Code
-                self.penjelasan_frame.pack(fill="x", pady=(0, 5), before=type_row)
                 self.bab2_kode_container.pack(fill="both", expand=True)
-                self.img_section.pack(fill="x", pady=(8, 0))
+                self.img_section.pack(fill="x", pady=(10, 0))
                 right_pane.pack(side="right", fill="both", expand=True)
                 self.ai_section.pack(fill="both", expand=True)
             elif val == "2":  # Langkah Kerja
-                self.penjelasan_frame.pack(fill="x", pady=(0, 5), before=type_row)
-                self.modul_frame.pack(fill="x", pady=4)
                 self.langkah_container.pack(fill="both", expand=True)
-                self.img_section.pack(fill="x", pady=(8, 0))
+                self.img_section.pack(fill="x", pady=(10, 0))
                 right_pane.pack(side="right", fill="both", expand=True)
                 self.ai_section.pack(fill="both", expand=True)
             elif val == "3":  # Q & A
-                self.modul_frame.pack(fill="x", pady=4)
+                # Area penjelasan otomatis kosong karena di-skip di langkah ke-3
                 self.qa_table_container.pack(fill="both", expand=True)
-                # Sinkronisasi ulang lebar setelah panel Q&A muncul
                 dialog.update_idletasks()
                 qa_canvas.event_generate("<Configure>")
 

@@ -242,16 +242,16 @@ class Bab1Tab(ttk.Frame):
         main_container = ttk.Frame(scrollable_body)
         main_container.pack(fill="both", expand=True)
 
-        content_split = ttk.Panedwindow(main_container, orient="horizontal")
+        content_split = ttk.Frame(main_container)
         content_split.pack(fill="both", expand=True)
 
         # Bagian Kiri: Input & Dokumentasi
         left_pane = ttk.Frame(content_split)
-        content_split.add(left_pane, weight=3)
+        left_pane.pack(side="left", fill="both", expand=True, padx=(0, 10))
 
         # Bagian Kanan: Analisa AI
         right_pane = ttk.Frame(content_split)
-        content_split.add(right_pane, weight=2)
+        right_pane.pack(side="right", fill="both", expand=True)
 
         # --- LEFT PANE CONTENT ---
         # 1. Informasi Dasar (Compact)
@@ -267,12 +267,34 @@ class Bab1Tab(ttk.Frame):
         if initial_penjelasan:
             penjelasan_text.insert("1.0", initial_penjelasan)
 
-        type_row = ttk.Frame(info_frame)
-        type_row.pack(fill="x", pady=5)
+        action_row = ttk.Frame(info_frame)
+        action_row.pack(fill="x", pady=5)
+        
+        # Sisi Kiri: Tipe Konten
+        type_row = ttk.Frame(action_row)
+        type_row.pack(side="left")
         ttk.Label(type_row, text="Tipe Konten:").pack(side="left")
         ttk.Radiobutton(type_row, text="Source Code", variable=tipe_var, value="1").pack(side="left", padx=10)
         ttk.Radiobutton(type_row, text="Langkah Kerja", variable=tipe_var, value="2").pack(side="left")
+        
+        # Sisi Kanan: Tombol Penjelasan AI
+        def run_penjelasan_ai():
+            judul = judul_var.get().strip()
+            if not judul:
+                messagebox.showwarning("Validasi", "Isi Judul Sub-Bab terlebih dahulu agar AI memahami konteks.")
+                return
+            
+            # Memanggil fungsi AI (asumsi fungsi generate_penjelasan tersedia di analysis_service)
+            res, err = self.app.analysis_service.generate_penjelasan_singkat(judul)
+            if err:
+                messagebox.showerror("AI Error", err)
+            else:
+                penjelasan_text.delete("1.0", tk.END)
+                penjelasan_text.insert("1.0", res)
 
+        ttk.Button(action_row, text="✨ Penjelasan AI", style="Action.TButton", 
+                   command=run_penjelasan_ai).pack(side="right")
+        
         # Widget Modul (Logika Bisnis Asli)
         modul_frame = ttk.Frame(info_frame)
         ttk.Label(modul_frame, text="File Modul:").pack(side="left")
@@ -342,6 +364,7 @@ class Bab1Tab(ttk.Frame):
             self.langkah_container.pack_forget()
 
             if tipe_var.get() == "1":
+                modul_frame.pack(fill="x", pady=(5,0))
                 self.kode_container.pack(fill="both", expand=True)
             else:
                 modul_frame.pack(fill="x", pady=(5,0))
