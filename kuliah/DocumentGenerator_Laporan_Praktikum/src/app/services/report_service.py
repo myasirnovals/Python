@@ -16,6 +16,17 @@ class ReportService:
         self.templates_dir = templates_dir
 
     @staticmethod
+    def _normalize_penjelasan_singkat(*candidates):
+        for candidate in candidates:
+            if candidate is None:
+                continue
+            text = str(candidate).strip()
+            if not text:
+                continue
+            return re.sub(r"\s+", " ", text)
+        return ""
+
+    @staticmethod
     def _normalize_langkah_list(raw_value):
         """
         LOGIKA BARU (ADAPTASI DARI USER):
@@ -112,7 +123,13 @@ class ReportService:
             print(f"⚠️ Warning pembersihan: {e}")
 
     def resolve_template(self, template_choice):
-        name = "format-1.docx" if template_choice == "1" else "format-2.docx"
+        template_map = {
+            "1": "format-1.docx",
+            "2": "format-2.docx",
+            "3": "format-3.docx",
+        }
+        choice = str(template_choice or "1").strip()
+        name = template_map.get(choice, "format-1.docx")
         template_path = os.path.join(self.templates_dir, name)
         if not os.path.exists(template_path):
             raise FileNotFoundError(template_path)
@@ -122,6 +139,11 @@ class ReportService:
         daftar_sub_bab = []
         counter_gbr_bab1 = 1
         for item in bab1_items:
+            penjelasan_singkat = self._normalize_penjelasan_singkat(
+                item.get("penjelasan_singkat"),
+                item.get("deskripsi_singkat"),
+                item.get("isi_deskripsi"),
+            )
             label_a = item.get("label_point_a") or (
                 "Source Code" if item.get("tipe") == "1" else "Langkah Kerja"
             )
@@ -193,7 +215,9 @@ class ReportService:
             daftar_sub_bab.append(
                 {
                     "judul_sub_bab": item.get("judul_sub_bab", ""),
-                    "penjelasan_singkat": item.get("penjelasan_singkat") or item.get("isi_deskripsi") or "",
+                    "penjelasan_singkat": penjelasan_singkat,
+                    "deskripsi_singkat": penjelasan_singkat,
+                    "isi_penjelasan_singkat": penjelasan_singkat,
                     "label_point_a": label_a,
                     "isi_point_a": isi_a,
                     "langkah_list": langkah_list,
@@ -242,6 +266,10 @@ class ReportService:
             tipe_konten = item.get("tipe_konten") or item.get("tipe", "1")
             judul_tugas = item.get("judul_tugas") or item.get("judul_sub_bab", "")
             isi_deskripsi = item.get("isi_deskripsi") or item.get("isi_point_a") or item.get("isi_a", "")
+            penjelasan_singkat = self._normalize_penjelasan_singkat(
+                item.get("penjelasan_singkat"),
+                item.get("deskripsi_singkat"),
+            )
             
             # --- LOGIKA ANALISA (SISTEM LOOPING LIST BARU - BOLEH DIUBAH) ---
             raw_analisa_tugas = item.get("isi_analisa_tugas") or item.get("isi_analisa") or item.get("analisa", "")
@@ -343,7 +371,9 @@ class ReportService:
             daftar_tugas.append(
                 {
                     "judul_tugas": judul_tugas,
-                    "penjelasan_singkat": item.get("penjelasan_singkat") or item.get("isi_deskripsi") or "",
+                    "penjelasan_singkat": penjelasan_singkat,
+                    "deskripsi_singkat": penjelasan_singkat,
+                    "isi_penjelasan_singkat": penjelasan_singkat,
                     "tipe_konten": tipe_konten,
                     "isi_deskripsi": isi_deskripsi,
                     "list_paragraf_analisa_tugas": list_paragraf_analisa_tugas,

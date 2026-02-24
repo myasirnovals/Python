@@ -170,6 +170,13 @@ class AnalysisService:
                 header += f" (tipe {tipe})"
             lines.append(header)
 
+            penjelasan = self._safe_text(
+                item.get("penjelasan_singkat") or item.get("deskripsi_singkat", ""),
+                400,
+            )
+            if penjelasan:
+                lines.append(f"- penjelasan: {penjelasan}")
+
             if tipe == "1":
                 kode_names = self._format_kode_names(
                     item.get("kode_items") or item.get("kode_files", [])
