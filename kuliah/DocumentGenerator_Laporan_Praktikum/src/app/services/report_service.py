@@ -193,6 +193,7 @@ class ReportService:
             daftar_sub_bab.append(
                 {
                     "judul_sub_bab": item.get("judul_sub_bab", ""),
+                    "penjelasan_singkat": item.get("penjelasan_singkat") or item.get("isi_deskripsi") or "",
                     "label_point_a": label_a,
                     "isi_point_a": isi_a,
                     "langkah_list": langkah_list,
@@ -342,6 +343,7 @@ class ReportService:
             daftar_tugas.append(
                 {
                     "judul_tugas": judul_tugas,
+                    "penjelasan_singkat": item.get("penjelasan_singkat") or item.get("isi_deskripsi") or "",
                     "tipe_konten": tipe_konten,
                     "isi_deskripsi": isi_deskripsi,
                     "list_paragraf_analisa_tugas": list_paragraf_analisa_tugas,
