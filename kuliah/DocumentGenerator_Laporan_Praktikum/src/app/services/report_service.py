@@ -6,7 +6,7 @@ try:
 except Exception:  # pragma: no cover - optional dependency
     win32 = None
 from docx import Document
-from docxtpl import DocxTemplate, RichText
+from docxtpl import DocxTemplate, RichText, Listing
 
 from app.doc_helpers import muat_gambar
 
@@ -122,6 +122,17 @@ class ReportService:
         except Exception as e:
             print(f"⚠️ Warning pembersihan: {e}")
 
+    @staticmethod
+    def _bersihkan_karakter_ilegal(teks):
+        """
+        Menyapu bersih karakter kontrol ASCII siluman yang membuat 
+        Microsoft Word (XML) terpotong/menyerah secara tiba-tiba.
+        """
+        if not isinstance(teks, str):
+            return ""
+        # Hapus karakter 0-31 dan 127, KECUALI Tab (\t), Enter (\n), dan Carriage Return (\r)
+        return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', teks)
+
     def resolve_template(self, template_choice):
         template_map = {
             "1": "format-1.docx",
@@ -177,8 +188,15 @@ class ReportService:
                         # Hapus penanda (Judul jadi string kosong)
                         judul_tampil = ""
 
+                    # --- FITUR PEMBERSIH PHP ---
+                    isi_kode_mentah = d.get("isi", "")
+                    isi_kode_bersih = self._bersihkan_karakter_ilegal(isi_kode_mentah)
+
+                    # GUNAKAN LISTING KHUSUS UNTUK SOURCE CODE
+                    kode_aman = Listing(isi_kode_bersih)
+
                     list_kode_final.append(
-                        {"judul": judul_tampil, "isi": d.get("isi", "")}
+                        {"judul": judul_tampil, "isi": kode_aman} # Masukkan kode_aman
                     )
 
             list_gbr = []
@@ -323,9 +341,16 @@ class ReportService:
                         # Kasus Single: Gunakan trik ##HAPUS## agar judul tidak muncul (sama seperti Bab 1)
                         judul_tampil = "##HAPUS##"
 
+                    # --- FITUR PEMBERSIH PHP ---
+                    isi_kode_mentah = kode.get("isi_kode") or kode.get("isi", "")
+                    isi_kode_bersih = self._bersihkan_karakter_ilegal(isi_kode_mentah)
+
+                    # GUNAKAN LISTING KHUSUS UNTUK SOURCE CODE
+                    kode_aman = Listing(isi_kode_bersih)
+
                     list_kode_final.append({
                         "judul": judul_tampil, 
-                        "isi": isi_kode
+                        "isi": kode_aman # Masukkan kode_aman
                     })
 
             qa_items = item.get("qa_items") or item.get("qa_list", [])
@@ -465,5 +490,5 @@ class ReportService:
 
         self._hapus_baris_hantu(output_path)
         self._hapus_paragraf_kosong_spesifik(output_path)
-        self._brute_force_delete_empty_rows(output_path)
+        # self._brute_force_delete_empty_rows(output_path)
         self._update_toc_word(output_path)
