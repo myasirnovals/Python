@@ -5,6 +5,7 @@ import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from tkinter import scrolledtext
+from tkinterdnd2 import DND_FILES, TkinterDnD
 
 from PIL import ImageGrab
 
@@ -313,6 +314,8 @@ class Bab1Tab(ttk.Frame):
         self.kode_container = ttk.Frame(content_frame)
         self.kode_listbox = tk.Listbox(self.kode_container, height=6, font=("Consolas", 10))
         self.kode_listbox.pack(side="left", fill="both", expand=True)
+        self.kode_listbox.drop_target_register(DND_FILES)
+        self.kode_listbox.dnd_bind('<<Drop>>', self._on_kode_drop)
         k_btns = ttk.Frame(self.kode_container)
         k_btns.pack(side="right", padx=(5, 0))
         ttk.Button(k_btns, text="+", width=3, command=self._add_kode_logic).pack(pady=2)
@@ -421,6 +424,66 @@ class Bab1Tab(ttk.Frame):
                 self.gambar_listbox.insert(
                     tk.END, f"🖼️ {name} ({g['caption']})"
                 )
+    def _on_kode_drop(self, event):
+        # Mengambil data file yang di-drop
+        files = self.kode_listbox.tk.splitlist(event.data)
+        for file_path in files:
+            # Filter ekstensi (opsional, bisa disesuaikan)
+            ext = os.path.splitext(file_path)[1].lower()
+            allowed = ['.py', '.c', '.cpp', '.java', '.js', '.html', '.css', '.php', '.sql', '.txt']
+            
+            if ext in allowed:
+                self._show_title_popup_for_drop(file_path)
+            else:
+                messagebox.showwarning("File Tidak Didukung", f"File {os.path.basename(file_path)} bukan source code.")
+
+    def _show_title_popup_for_drop(self, path):
+        # Pop up input judul otomatis setelah file di-drop
+        dialog = tk.Toplevel(self)
+        dialog.title("Judul Source Code")
+        dialog.geometry("400x150")
+        dialog.configure(bg="#f8f9fa")
+        dialog.transient(self._active_bab1_dialog) # Menempel pada dialog editor
+        dialog.grab_set()
+
+        judul_var = tk.StringVar(value=os.path.basename(path)) # Default: nama file
+        
+        container = ttk.Frame(dialog, padding=15)
+        container.pack(fill="both", expand=True)
+
+        ttk.Label(container, text=f"Masukkan Judul untuk:\n{os.path.basename(path)}", 
+                  font=("Segoe UI", 9)).pack(anchor="w", pady=(0, 5))
+        
+        entry = ttk.Entry(container, textvariable=judul_var)
+        entry.pack(fill="x", pady=5)
+        entry.focus_set()
+
+        def save_dropped():
+            judul = judul_var.get().strip()
+            if not judul:
+                messagebox.showwarning("Validasi", "Judul harus diisi!")
+                return
+            
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                
+                self.kode_items.append({
+                    "judul": judul,
+                    "nama": os.path.basename(path),
+                    "isi": content
+                })
+                self._refresh_dialog_lists()
+                dialog.destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"Gagal membaca file: {e}")
+
+        btn_frame = ttk.Frame(container)
+        btn_frame.pack(side="bottom", fill="x", pady=(10, 0))
+        
+        ttk.Button(btn_frame, text="Tambahkan", style="Action.TButton", 
+                   command=save_dropped).pack(side="right", padx=5)
+        ttk.Button(btn_frame, text="Batal", command=dialog.destroy).pack(side="right")
 
     def _add_kode_logic(self):
         # Membuat jendela pop-up dialog

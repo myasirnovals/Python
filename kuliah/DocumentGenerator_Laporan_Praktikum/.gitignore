@@ -28,6 +28,8 @@ output/
 # Icon must end with two \r
 Icon
 
+# LXML
+lxml-6.0.2-pp311-pypy311_pp73-win_amd64.whl
 
 # Thumbnails
 ._*

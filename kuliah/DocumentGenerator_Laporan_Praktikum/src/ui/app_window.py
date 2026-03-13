@@ -2,6 +2,7 @@ import os
 import sys
 import tkinter as tk
 from tkinter import ttk
+from tkinterdnd2 import TkinterDnD
 from PIL import Image, ImageTk
 
 from app.ai_client import GeminiClient
@@ -19,7 +20,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, "..", "templates")
 ASSETS_DIR = os.path.join(BASE_DIR, "..", "assets")
 
 
-class App(tk.Tk):
+class App(TkinterDnD.Tk):
     def __init__(self):
         super().__init__()
         self.title("Lab Report Generator Pro")
