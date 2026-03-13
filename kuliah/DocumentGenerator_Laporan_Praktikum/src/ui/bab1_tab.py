@@ -1,8 +1,12 @@
 import os
 import re
+import tempfile
+import time
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from tkinter import scrolledtext
+
+from PIL import ImageGrab
 
 
 class Bab1Tab(ttk.Frame):
@@ -10,6 +14,7 @@ class Bab1Tab(ttk.Frame):
         super().__init__(parent, padding=20)
         self.app = app
         self.bab1_items = []
+        self._active_bab1_dialog = None
 
         self.isi_a_text = None
         self.kode_items = []
@@ -112,6 +117,7 @@ class Bab1Tab(ttk.Frame):
 
     def _open_bab1_dialog(self, initial=None):
         dialog = tk.Toplevel(self)
+        self._active_bab1_dialog = dialog
         dialog.title("Editor Hasil Praktikum")
         
         # IMK: Ukuran ideal untuk layar laptop menengah (950x600)
@@ -331,6 +337,7 @@ class Bab1Tab(ttk.Frame):
         g_btns = ttk.Frame(img_main)
         g_btns.pack(side="right", padx=(5, 0))
         ttk.Button(g_btns, text="+", width=3, command=self._add_gambar_logic).pack(pady=2)
+        ttk.Button(g_btns, text="📷", width=3, command=self._capture_gambar_logic).pack(pady=2)
         ttk.Button(g_btns, text="-", width=3, command=self._remove_gambar_logic).pack()
 
         # --- RIGHT PANE CONTENT (Analisa AI) ---
@@ -368,7 +375,11 @@ class Bab1Tab(ttk.Frame):
         toggle_view()
         self._refresh_dialog_lists()
 
-        self.wait_window(dialog)
+        try:
+            self.wait_window(dialog)
+        finally:
+            if self._active_bab1_dialog is dialog:
+                self._active_bab1_dialog = None
         return res_val["data"]
 
     def _run_langkah_ai(self, judul_var, target_widget):
@@ -496,6 +507,170 @@ class Bab1Tab(ttk.Frame):
             if cap is not None:
                 self.gambar_items.append({"path": path, "caption": cap})
                 self._refresh_dialog_lists()
+
+    def _capture_gambar_logic(self):
+        main_window = self.winfo_toplevel()
+        owner_dialog = self._active_bab1_dialog
+
+        if owner_dialog is not None and not owner_dialog.winfo_exists():
+            owner_dialog = None
+
+        windows_to_hide = []
+        if main_window.winfo_exists():
+            windows_to_hide.append(main_window)
+        if owner_dialog is not None and owner_dialog is not main_window:
+            windows_to_hide.append(owner_dialog)
+
+        previous_grab = None
+        if owner_dialog is not None:
+            try:
+                current_grab = owner_dialog.grab_current()
+                if current_grab is owner_dialog:
+                    previous_grab = owner_dialog
+                    owner_dialog.grab_release()
+            except tk.TclError:
+                previous_grab = None
+
+        for window in windows_to_hide:
+            try:
+                window.withdraw()
+                window.update_idletasks()
+            except tk.TclError:
+                continue
+
+        def open_overlay():
+            overlay = tk.Toplevel(main_window)
+            overlay.attributes("-fullscreen", True)
+            overlay.attributes("-topmost", True)
+            overlay.attributes("-alpha", 0.28)
+            overlay.configure(bg="black")
+            overlay.grab_set()
+            overlay.focus_force()
+
+            hint_frame = ttk.Frame(overlay, padding=(12, 10))
+            hint_frame.place(relx=1.0, x=-20, y=20, anchor="ne")
+            ttk.Label(
+                hint_frame,
+                text="Drag untuk memilih area. ESC / klik kanan / Batal untuk keluar.",
+            ).pack(side="left", padx=(0, 10))
+
+            canvas = tk.Canvas(overlay, cursor="cross", bg="black", highlightthickness=0)
+            canvas.pack(fill="both", expand=True)
+            hint_frame.lift()
+
+            state = {"start": None, "rect": None}
+            restored = {"done": False}
+
+            def restore_main_window():
+                if restored["done"]:
+                    return
+                restored["done"] = True
+
+                for window in windows_to_hide:
+                    try:
+                        window.deiconify()
+                        window.lift()
+                    except tk.TclError:
+                        continue
+
+                if previous_grab is not None and previous_grab.winfo_exists():
+                    try:
+                        previous_grab.grab_set()
+                    except tk.TclError:
+                        pass
+
+                focus_target = owner_dialog if owner_dialog is not None and owner_dialog.winfo_exists() else main_window
+                try:
+                    focus_target.focus_force()
+                except tk.TclError:
+                    pass
+
+            def cancel_capture(_event=None):
+                try:
+                    overlay.grab_release()
+                except tk.TclError:
+                    pass
+                if overlay.winfo_exists():
+                    overlay.destroy()
+                restore_main_window()
+
+            def on_press(event):
+                state["start"] = (event.x, event.y)
+                if state["rect"] is not None:
+                    canvas.delete(state["rect"])
+                state["rect"] = canvas.create_rectangle(
+                    event.x,
+                    event.y,
+                    event.x,
+                    event.y,
+                    outline="#38bdf8",
+                    width=2,
+                )
+
+            def on_drag(event):
+                if not state["start"] or state["rect"] is None:
+                    return
+                sx, sy = state["start"]
+                canvas.coords(state["rect"], sx, sy, event.x, event.y)
+
+            def on_release(event):
+                if not state["start"]:
+                    cancel_capture()
+                    return
+
+                sx, sy = state["start"]
+                ex, ey = event.x, event.y
+                x1, x2 = sorted((sx, ex))
+                y1, y2 = sorted((sy, ey))
+
+                if (x2 - x1) < 5 or (y2 - y1) < 5:
+                    cancel_capture()
+                    return
+
+                overlay.withdraw()
+                overlay.update_idletasks()
+
+                bbox = (x1, y1, x2, y2)
+                try:
+                    image = ImageGrab.grab(bbox=bbox)
+                    screenshot_dir = os.path.join(tempfile.gettempdir(), "dglp_screenshots")
+                    os.makedirs(screenshot_dir, exist_ok=True)
+                    filename = f"screenshot_{time.time_ns()}.png"
+                    screenshot_path = os.path.join(screenshot_dir, filename)
+                    image.save(screenshot_path)
+
+                    try:
+                        overlay.grab_release()
+                    except tk.TclError:
+                        pass
+                    overlay.destroy()
+                    restore_main_window()
+
+                    cap = self._prompt_caption()
+                    if cap is not None:
+                        self.gambar_items.append({"path": screenshot_path, "caption": cap})
+                        self._refresh_dialog_lists()
+                except Exception as e:
+                    try:
+                        overlay.grab_release()
+                    except tk.TclError:
+                        pass
+                    if overlay.winfo_exists():
+                        overlay.destroy()
+                    restore_main_window()
+                    messagebox.showerror("Error", f"Gagal mengambil screenshot: {e}")
+
+            ttk.Button(hint_frame, text="Batal", command=cancel_capture).pack(side="right")
+
+            canvas.bind("<ButtonPress-1>", on_press)
+            canvas.bind("<B1-Motion>", on_drag)
+            canvas.bind("<ButtonRelease-1>", on_release)
+            overlay.bind("<Escape>", cancel_capture)
+            overlay.bind("<Button-3>", cancel_capture)
+            overlay.protocol("WM_DELETE_WINDOW", cancel_capture)
+
+        # Memberi jeda singkat agar proses minimize selesai sebelum layar dicapture.
+        self.after(200, open_overlay)
 
     def _remove_gambar_logic(self):
         sel = self.gambar_listbox.curselection()
