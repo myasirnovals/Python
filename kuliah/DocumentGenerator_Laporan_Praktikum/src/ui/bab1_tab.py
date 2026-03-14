@@ -337,6 +337,8 @@ class Bab1Tab(ttk.Frame):
         img_main.pack(fill="x")
         self.gambar_listbox = tk.Listbox(img_main, height=3, font=("Segoe UI", 9))
         self.gambar_listbox.pack(side="left", fill="both", expand=True)
+        self.gambar_listbox.drop_target_register(DND_FILES)
+        self.gambar_listbox.dnd_bind('<<Drop>>', self._on_gambar_drop)
         g_btns = ttk.Frame(img_main)
         g_btns.pack(side="right", padx=(5, 0))
         ttk.Button(g_btns, text="+", width=3, command=self._add_gambar_logic).pack(pady=2)
@@ -482,6 +484,61 @@ class Bab1Tab(ttk.Frame):
         btn_frame.pack(side="bottom", fill="x", pady=(10, 0))
         
         ttk.Button(btn_frame, text="Tambahkan", style="Action.TButton", 
+                   command=save_dropped).pack(side="right", padx=5)
+        ttk.Button(btn_frame, text="Batal", command=dialog.destroy).pack(side="right")
+
+    def _on_gambar_drop(self, event):
+        # Mengambil data file yang di-drop
+        files = self.gambar_listbox.tk.splitlist(event.data)
+        for file_path in files:
+            # Filter ekstensi gambar
+            ext = os.path.splitext(file_path)[1].lower()
+            allowed = ['.png', '.jpg', '.jpeg', '.bmp', '.gif']
+
+            if ext in allowed:
+                self._show_caption_popup_for_drop(file_path)
+            else:
+                messagebox.showwarning("File Tidak Didukung",
+                                       f"File {os.path.basename(file_path)} bukan file gambar yang didukung.")
+
+    def _show_caption_popup_for_drop(self, path):
+        # Pop up input caption otomatis setelah gambar di-drop
+        dialog = tk.Toplevel(self)
+        dialog.title("Caption Gambar")
+        dialog.geometry("420x160")
+        dialog.configure(bg="#f8f9fa")
+        dialog.transient(self._active_bab1_dialog)  # Menempel pada dialog editor
+        dialog.grab_set()
+
+        caption_var = tk.StringVar(value=os.path.basename(path))  # Default: nama file
+
+        container = ttk.Frame(dialog, padding=15)
+        container.pack(fill="both", expand=True)
+
+        ttk.Label(container, text=f"Masukkan Caption untuk:\n{os.path.basename(path)}",
+                  font=("Segoe UI", 9)).pack(anchor="w", pady=(0, 5))
+
+        entry = ttk.Entry(container, textvariable=caption_var)
+        entry.pack(fill="x", pady=5)
+        entry.focus_set()
+
+        def save_dropped():
+            caption = caption_var.get().strip()
+            if not caption:
+                messagebox.showwarning("Validasi", "Caption harus diisi!")
+                return
+
+            self.gambar_items.append({
+                "path": path,
+                "caption": caption
+            })
+            self._refresh_dialog_lists()
+            dialog.destroy()
+
+        btn_frame = ttk.Frame(container)
+        btn_frame.pack(side="bottom", fill="x", pady=(10, 0))
+
+        ttk.Button(btn_frame, text="Tambahkan", style="Action.TButton",
                    command=save_dropped).pack(side="right", padx=5)
         ttk.Button(btn_frame, text="Batal", command=dialog.destroy).pack(side="right")
 
