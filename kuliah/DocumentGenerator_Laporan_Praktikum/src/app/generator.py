@@ -328,7 +328,7 @@ def main():
 
     try:
         nama_file = f"Laporan_Modul_{nomor_modul}_{nama.replace(' ', '_')}.docx"
-        doc.render(context)
+        doc.render(context, autoescape=True)
         doc.save(nama_file)
         print(f"✅ BERHASIL! File tersimpan: {nama_file}")
 
@@ -360,7 +360,7 @@ def render_report(template, context: dict, output_path: str, pilihan_tpl: str = 
         else:
             doc = template
 
-        doc.render(context)
+        doc.render(context, autoescape=True)
         doc.save(output_path)
 
         # Post-processing: remove ghost lines and update TOC

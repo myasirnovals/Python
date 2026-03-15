@@ -11,6 +11,37 @@ from PIL import ImageGrab
 
 
 class Bab1Tab(ttk.Frame):
+    CODE_EXTENSIONS = {
+        ".html",
+        ".css",
+        ".js",
+        ".jsx",
+        ".ts",
+        ".php",
+        ".py",
+        ".java",
+        ".cpp",
+        ".c",
+        ".h",
+        ".cs",
+        ".pl",
+        ".rb",
+        ".go",
+        ".swift",
+        ".xml",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".md",
+        ".sql",
+        ".txt",
+    }
+    CODE_FILETYPE_PATTERN = (
+        "*.html;*.css;*.js;*.jsx;*.ts;*.php;*.py;*.java;*.cpp;*.c;*.h;*.cs;*.pl;"
+        "*.rb;*.go;*.swift;*.xml;*.json;*.yaml;*.yml;*.md;*.sql;*.txt"
+    )
+    MAX_CODE_FILE_SIZE = 2 * 1024 * 1024
+
     def __init__(self, app, parent):
         super().__init__(parent, padding=20)
         self.app = app
@@ -426,15 +457,28 @@ class Bab1Tab(ttk.Frame):
                 self.gambar_listbox.insert(
                     tk.END, f"🖼️ {name} ({g['caption']})"
                 )
+
+    def _is_allowed_code_file(self, path):
+        ext = os.path.splitext(path)[1].lower()
+        return ext in self.CODE_EXTENSIONS
+
+    def _read_code_file_safe(self, path):
+        if not os.path.isfile(path):
+            raise ValueError("Path file tidak valid.")
+
+        if os.path.getsize(path) > self.MAX_CODE_FILE_SIZE:
+            raise ValueError("Ukuran file terlalu besar (maksimal 2 MB).")
+
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+
+        return content.replace("\x00", "")
+
     def _on_kode_drop(self, event):
         # Mengambil data file yang di-drop
         files = self.kode_listbox.tk.splitlist(event.data)
         for file_path in files:
-            # Filter ekstensi (opsional, bisa disesuaikan)
-            ext = os.path.splitext(file_path)[1].lower()
-            allowed = ['.py', '.c', '.cpp', '.java', '.js', '.html', '.css', '.php', '.sql', '.txt']
-            
-            if ext in allowed:
+            if self._is_allowed_code_file(file_path):
                 self._show_title_popup_for_drop(file_path)
             else:
                 messagebox.showwarning("File Tidak Didukung", f"File {os.path.basename(file_path)} bukan source code.")
@@ -467,8 +511,7 @@ class Bab1Tab(ttk.Frame):
                 return
             
             try:
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                content = self._read_code_file_safe(path)
                 
                 self.kode_items.append({
                     "judul": judul,
@@ -573,7 +616,7 @@ class Bab1Tab(ttk.Frame):
             path = filedialog.askopenfilename(
                 title="Pilih File Source Code",
                 filetypes=[
-                    ("Source Code", "*.py;*.c;*.cpp;*.java;*.js;*.html;*.css;*.php;*.sql;*.txt"),
+                    ("Source Code", self.CODE_FILETYPE_PATTERN),
                     ("All Files", "*.*")
                 ]
             )
@@ -593,10 +636,13 @@ class Bab1Tab(ttk.Frame):
             if not judul or not path:
                 messagebox.showwarning("Validasi", "Judul dan File harus diisi!")
                 return
+
+            if not self._is_allowed_code_file(path):
+                messagebox.showwarning("File Tidak Didukung", "Ekstensi file tidak termasuk daftar source code yang diizinkan.")
+                return
             
             try:
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
+                content = self._read_code_file_safe(path)
                 
                 # Menyimpan data ke dalam list
                 self.kode_items.append({
