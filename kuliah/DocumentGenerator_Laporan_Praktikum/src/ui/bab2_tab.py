@@ -1,3 +1,4 @@
+import ctypes
 import os
 import tempfile
 import time
@@ -820,12 +821,41 @@ class Bab2Tab(ttk.Frame):
                 continue
 
         def open_overlay():
+            # Deteksi virtual screen untuk dukungan extended/multi-monitor
+            try:
+                user32 = ctypes.windll.user32
+                virt_x = user32.GetSystemMetrics(76)  # SM_XVIRTUALSCREEN
+                virt_y = user32.GetSystemMetrics(77)  # SM_YVIRTUALSCREEN
+                virt_w = user32.GetSystemMetrics(78)  # SM_CXVIRTUALSCREEN
+                virt_h = user32.GetSystemMetrics(79)  # SM_CYVIRTUALSCREEN
+                if virt_w <= 0 or virt_h <= 0:
+                    raise ValueError("Invalid virtual screen size")
+            except Exception:
+                virt_x, virt_y = 0, 0
+                virt_w = main_window.winfo_screenwidth()
+                virt_h = main_window.winfo_screenheight()
+
             overlay = tk.Toplevel(main_window)
-            overlay.attributes("-fullscreen", True)
+            overlay.overrideredirect(True)
             overlay.attributes("-topmost", True)
             overlay.attributes("-alpha", 0.28)
             overlay.configure(bg="black")
-            overlay.grab_set()
+            overlay.geometry(f"{virt_w}x{virt_h}")
+            overlay.update_idletasks()
+
+            # Gunakan Win32 API agar overlay bisa diposisikan di koordinat negatif
+            # (monitor kiri dari primary screen)
+            try:
+                ctypes.windll.user32.SetWindowPos(
+                    overlay.winfo_id(), -1, virt_x, virt_y, virt_w, virt_h, 0x0010
+                )
+            except Exception:
+                pass
+
+            try:
+                overlay.grab_set()
+            except tk.TclError:
+                pass
             overlay.focus_force()
 
             hint_frame = ttk.Frame(overlay, padding=(12, 10))
@@ -911,9 +941,15 @@ class Bab2Tab(ttk.Frame):
                 overlay.withdraw()
                 overlay.update_idletasks()
 
-                bbox = (x1, y1, x2, y2)
+                # Konversi koordinat canvas ke koordinat layar absolut
+                abs_x1 = x1 + virt_x
+                abs_y1 = y1 + virt_y
+                abs_x2 = x2 + virt_x
+                abs_y2 = y2 + virt_y
+
+                bbox = (abs_x1, abs_y1, abs_x2, abs_y2)
                 try:
-                    image = ImageGrab.grab(bbox=bbox)
+                    image = ImageGrab.grab(bbox=bbox, all_screens=True)
                     screenshot_dir = os.path.join(tempfile.gettempdir(), "dglp_screenshots")
                     os.makedirs(screenshot_dir, exist_ok=True)
                     filename = f"screenshot_{time.time_ns()}.png"
