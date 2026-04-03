@@ -1,7 +1,7 @@
 """Base class for UI tabs (OOP core)."""
 
 from tkinter import ttk
-from ui.utils import show_info, show_warning, show_error
+from ui.utils import UIUtils
 
 
 class BaseTab(ttk.Frame):
@@ -32,10 +32,10 @@ class BaseTab(ttk.Frame):
         return btn_frame
 
     def show_info(self, title: str, message: str) -> None:
-        show_info(title, message, parent=self)
+        UIUtils.show_info(title, message, parent=self)
 
     def show_warning(self, title: str, message: str) -> None:
-        show_warning(title, message, parent=self)
+        UIUtils.show_warning(title, message, parent=self)
 
     def show_error(self, title: str, message: str) -> None:
-        show_error(title, message, parent=self)
+        UIUtils.show_error(title, message, parent=self)

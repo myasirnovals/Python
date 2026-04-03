@@ -4,7 +4,7 @@ import time
 import PyPDF2
 
 from docx import Document
-from app.prompts import build_prompt, instruksi_gaya
+from app.prompts import PromptBuilder
 
 try:
     import win32com.client as win32
@@ -16,6 +16,7 @@ class AnalysisService:
     def __init__(self, ai_client):
         self.ai_client = ai_client
         self.ai_ready = False
+        self.prompt_builder = PromptBuilder()
 
     def ensure_ready(self):
         if self.ai_ready:
@@ -316,7 +317,11 @@ class AnalysisService:
         if tipe == "1":
             isi_a = self.concat_kode_for_prompt(kode_items)
 
-        prompt = build_prompt(tipe, isi_a, instruksi_gaya())
+        prompt = self.prompt_builder.build_prompt(
+            tipe,
+            isi_a,
+            self.prompt_builder.instruksi_gaya(),
+        )
         image_path = gambar_items[0]["path"] if gambar_items else None
         result = self.ai_client.ask(prompt, image_path)
 

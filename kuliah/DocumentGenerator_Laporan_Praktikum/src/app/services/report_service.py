@@ -8,12 +8,13 @@ except Exception:  # pragma: no cover - optional dependency
 from docx import Document
 from docxtpl import DocxTemplate, RichText, Listing
 
-from app.doc_helpers import muat_gambar
+from app.doc_helpers import ImageDocumentHelper
 
 
 class ReportService:
     def __init__(self, templates_dir):
         self.templates_dir = templates_dir
+        self.image_helper = ImageDocumentHelper()
 
     @staticmethod
     def _normalize_penjelasan_singkat(*candidates):
@@ -146,6 +147,13 @@ class ReportService:
             raise FileNotFoundError(template_path)
         return template_path
 
+    def postprocess_document(self, output_path, cleanup_empty_paragraphs=False):
+        """Apply standard post-processing pipeline for generated report files."""
+        self._hapus_baris_hantu(output_path)
+        if cleanup_empty_paragraphs:
+            self._hapus_paragraf_kosong_spesifik(output_path)
+        self._update_toc_word(output_path)
+
     def build_bab1_context(self, doc, bab1_items, template_choice="1"):
         daftar_sub_bab = []
         counter_gbr_bab1 = 1
@@ -201,7 +209,7 @@ class ReportService:
 
             list_gbr = []
             for g in item.get("list_gambar") or item.get("gambar_paths", []):
-                obj = muat_gambar(doc, g.get("path", ""))
+                obj = self.image_helper.muat_gambar(doc, g.get("path", ""))
                 if not obj:
                     continue
                 list_gbr.append(
@@ -310,7 +318,7 @@ class ReportService:
             list_gbr_tgs = []
             for gambar in gambar_items_raw:
                 path_gambar = gambar.get("path", "")
-                obj = muat_gambar(doc, path_gambar)
+                obj = self.image_helper.muat_gambar(doc, path_gambar)
                 if not obj:
                     continue
                 caption_gambar = gambar.get("caption_gambar") or gambar.get("caption", "")
