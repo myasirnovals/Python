@@ -8,10 +8,10 @@ from PIL import Image, ImageTk
 from app.ai_client import GeminiClient
 from app.services.analysis_service import AnalysisService
 from app.services.report_service import ReportService
-from ui.bab1_tab import Bab1Tab
-from ui.bab2_tab import Bab2Tab
-from ui.bab3_tab import Bab3Tab
 from ui.cover_tab import CoverTab
+from ui.results_tab import ResultsTab
+from ui.tasks_tab import TasksTab
+from ui.conclusion_tab import ConclusionTab
 from ui.generate_tab import GenerateTab
 from ui.styles import setup_styles
 
@@ -28,17 +28,19 @@ class App(TkinterDnD.Tk):
         # --- UPDATE UKURAN (FINAL) ---
         # Lebar: 950
         # Tinggi: 630 (Naik dikit dari 600 biar ada napas di bawah)
-        target_width = 950
-        target_height = 630 
-
         screen_w = self.winfo_screenwidth()
         screen_h = self.winfo_screenheight()
+
+        is_compact = screen_w < 1400 or screen_h < 850
+        target_width = 910 if is_compact else 980
+        target_height = 610 if is_compact else 670
 
         x_pos = (screen_w - target_width) // 2
         y_pos = (screen_h - target_height) // 2
 
         self.geometry(f"{target_width}x{target_height}+{x_pos}+{y_pos}")
-        self.minsize(800, 550)
+        self.minsize(780, 530)
+        self.is_compact_mode = is_compact
         # -----------------------------
 
         setup_styles(self)
@@ -48,9 +50,9 @@ class App(TkinterDnD.Tk):
         self.report_service = ReportService(TEMPLATES_DIR)
 
         self.cover_tab = None
-        self.bab1_tab = None
-        self.bab2_tab = None
-        self.bab3_tab = None
+        self.results_tab = None
+        self.tasks_tab = None
+        self.conclusion_tab = None
         self.generate_tab = None
         self.logo_image = None
 
@@ -79,13 +81,13 @@ class App(TkinterDnD.Tk):
         return ImageTk.PhotoImage(image)
 
     def _build_ui(self):
-        self.configure(bg="#f8f9fa")
+        self.configure(bg="#f3f6fb")
 
-        # Padding 15 tetap, nanti akan terlihat pas dengan tinggi 630
+        outer_pad = 10 if getattr(self, "is_compact_mode", False) else 15
         main_container = ttk.Frame(self)
-        main_container.pack(fill="both", expand=True, padx=15, pady=15)
+        main_container.pack(fill="both", expand=True, padx=outer_pad, pady=outer_pad)
 
-        content_canvas = tk.Canvas(main_container, highlightthickness=0, bg="#f8f9fa")
+        content_canvas = tk.Canvas(main_container, highlightthickness=0, bg="#f3f6fb")
         content_scrollbar = ttk.Scrollbar(
             main_container, orient="vertical", command=content_canvas.yview
         )
@@ -114,7 +116,7 @@ class App(TkinterDnD.Tk):
         content_canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
         header_frame = ttk.Frame(scrollable_content)
-        header_frame.pack(fill="x", pady=(0, 10))
+        header_frame.pack(fill="x", pady=(0, 8 if self.is_compact_mode else 10))
 
         self.logo_image = self._load_logo_image()
         if self.logo_image:
@@ -123,11 +125,25 @@ class App(TkinterDnD.Tk):
         ttk.Label(header_frame, text="Lab Report Generator", style="Header.TLabel").pack(
             side="left"
         )
+        ttk.Label(header_frame, text="v4.2.7", style="Muted.TLabel").pack(
+            side="left", padx=(10, 0), pady=(4, 0)
+        )
         ttk.Label(
-            header_frame, text="v4.2.7 Beta", foreground="#6c757d"
-        ).pack(side="left", padx=10, pady=(5, 0))
+            header_frame,
+            text="AI Assisted",
+            background="#dbeafe",
+            foreground="#1d4ed8",
+            font=("Segoe UI", 9, "bold"),
+            padding=(8, 3),
+        ).pack(side="left", padx=8, pady=(2, 0))
 
-        self.notebook = ttk.Notebook(scrollable_content)
+        notebook_container = ttk.Frame(
+            scrollable_content,
+            padding=(8 if self.is_compact_mode else 10),
+        )
+        notebook_container.pack(fill="both", expand=True)
+
+        self.notebook = ttk.Notebook(notebook_container)
         self.notebook.pack(fill="both", expand=True)
 
         cover_frame = ttk.Frame(self.notebook)
@@ -143,8 +159,8 @@ class App(TkinterDnD.Tk):
         self.notebook.add(generate_frame, text="Selesai")
 
         self.cover_tab = CoverTab(self, cover_frame)
-        self.bab1_tab = Bab1Tab(self, bab1_frame)
-        self.bab2_tab = Bab2Tab(self, bab2_frame)
-        self.bab3_tab = Bab3Tab(self, bab3_frame)
+        self.results_tab = ResultsTab(self, bab1_frame)
+        self.tasks_tab = TasksTab(self, bab2_frame)
+        self.conclusion_tab = ConclusionTab(self, bab3_frame)
         self.generate_tab = GenerateTab(self, generate_frame)
 
