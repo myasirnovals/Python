@@ -27,6 +27,16 @@ def build_prompt(pilih_tipe, isi_a, instruksi):
             "                "
         )
 
+    if pilih_tipe == "3":
+        return (
+            "\n                Analisa Q and A Praktikum.\n\n"
+            "                TUGAS:\n"
+            "                Baca daftar pertanyaan dan jawaban di bawah, lalu jelaskan inti materi yang sedang dibahas secara ringkas dan formal.\n\n"
+            f"                Daftar Q and A:\n                {isi_a}\n\n"
+            f"                {instruksi}\n"
+            "                "
+        )
+
     return (
         "\n                Analisa Langkah Kerja Praktikum.\n\n"
         "                TUGAS:\n"

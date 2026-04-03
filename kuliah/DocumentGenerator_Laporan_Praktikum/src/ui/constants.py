@@ -59,6 +59,7 @@ MODUL_DIALOG_HEIGHT = 180
 # Content settings
 CONTENT_TYPE_SOURCE_CODE = "1"
 CONTENT_TYPE_WORK_STEPS = "2"
+CONTENT_TYPE_Q_AND_A = "3"
 
 # Listbox settings
 LISTBOX_FONT = ("Segoe UI", 11)
@@ -84,3 +85,4 @@ TAB_LABEL_GENERATE = "Selesai"
 # Content type labels
 LABEL_SOURCE_CODE = "Source Code"
 LABEL_WORK_STEPS = "Langkah Kerja"
+LABEL_Q_AND_A = "Q and A"
