@@ -30,10 +30,10 @@ class ReportSectionsCollector:
 
         if pilihan_tpl == "2":
             nama_template = os.path.join(self.templates_dir, "format-2.docx")
-            print("👉 Menggunakan: Template Renggang (Block Style)")
+            print("-> Menggunakan: Template Renggang (Block Style)")
         else:
             nama_template = os.path.join(self.templates_dir, "format-1.docx")
-            print("👉 Menggunakan: Template Rapat (Indented Style)")
+            print("-> Menggunakan: Template Rapat (Indented Style)")
 
         return pilihan_tpl, nama_template
 
@@ -119,18 +119,23 @@ class ReportSectionsCollector:
 
         return list_gbr, path_gambar_utama, counter_gbr_bab1
 
-    def _input_bab1_analisa(self, pilih_tipe, isi_a, path_gambar_utama, pilihan_tpl, ai_client):
+    def _input_bab1_analisa(self, pilih_tipe, isi_a, path_gambar_utama, pilihan_tpl, ai_client, judul_sub=""):
         print("\n   [Input Analisa]")
-        if input("   🤖 Gunakan AI untuk analisa? (y/n): ").lower() == "y":
-            instruksi = self.prompt_builder.instruksi_gaya()
-            prompt = self.prompt_builder.build_prompt(pilih_tipe, isi_a, instruksi)
+        if input("   [AI] Gunakan AI untuk analisa? (y/n): ").lower() == "y":
+            prompt = self.prompt_builder.build_analisa_prompt(
+                pilih_tipe=pilih_tipe,
+                isi_a=isi_a,
+                judul_sub=judul_sub or "Sub-Bab Analisa",
+                has_image=bool(path_gambar_utama),
+            )
 
             analisa = ai_client.ask(prompt, path_gambar_utama)
+            analisa = self.prompt_builder.sanitize_ai_output(analisa, is_kesimpulan=False)
             if pilihan_tpl == "1" and analisa:
                 analisa = analisa.replace("\n\n", "\n")
                 analisa = "\t" + analisa.replace("\n", "\n\t")
 
-            print(f"   ✅ Hasil AI: Selesai ({len(analisa)} karakter)")
+            print(f"   [OK] Hasil AI: Selesai ({len(analisa)} karakter)")
             return analisa
 
         return self.input_reader.input_multiline("   Masukkan Analisa Manual")
@@ -153,6 +158,7 @@ class ReportSectionsCollector:
             path_gambar_utama,
             pilihan_tpl,
             ai_client,
+            judul_sub,
         )
 
         return (

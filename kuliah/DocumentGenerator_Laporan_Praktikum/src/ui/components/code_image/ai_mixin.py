@@ -20,7 +20,15 @@ class CodeImageAIMixin:
             self.status_var.set("Modul belum diinput pada tab Cover.")
             return
 
-        res, err = self.app.analysis_service.generate_penjelasan_singkat(judul, modul_text)
+        cover_data = self.app.cover_tab.get_cover_data()
+        modul_path = self.app.cover_tab.get_modul_path()
+
+        res, err = self.app.analysis_service.generate_penjelasan_singkat(
+            judul_sub=judul,
+            modul_text=modul_text,
+            cover_data=cover_data,
+            modul_path=modul_path,
+        )
         if err:
             self.show_error("AI Error", err)
             return
@@ -35,12 +43,21 @@ class CodeImageAIMixin:
             if self.detail_tipe_var.get() == CONTENT_TYPE_Q_AND_A
             else self.isi_a_text.get("1.0", tk.END)
         )
+        judul = self.detail_judul_var.get().strip()
+        modul_text = self.app.cover_tab.get_modul_text()
+        cover_data = self.app.cover_tab.get_cover_data()
+        modul_path = self.app.cover_tab.get_modul_path()
+
         res, err = self.app.analysis_service.generate_analysis(
-            self.detail_tipe_var.get(),
-            isi_a_value,
-            self.kode_items,
-            self.gambar_items,
-            self.app.cover_tab.get_template_choice(),
+            tipe=self.detail_tipe_var.get(),
+            isi_a_text=isi_a_value,
+            kode_items=self.kode_items,
+            gambar_items=self.gambar_items,
+            template_choice=self.app.cover_tab.get_template_choice(),
+            judul_sub=judul,
+            modul_text=modul_text,
+            cover_data=cover_data,
+            modul_path=modul_path,
         )
         if err:
             self.show_error("AI Error", err)
@@ -57,7 +74,18 @@ class CodeImageAIMixin:
             return
 
         modul_text = self.app.cover_tab.get_modul_text()
-        image_path = self.gambar_items[0]["path"] if self.gambar_items else None
+        cover_data = self.app.cover_tab.get_cover_data()
+        modul_path = self.app.cover_tab.get_modul_path()
+        isi_deskripsi = (
+            self.isi_a_text.get("1.0", tk.END).strip()
+            if hasattr(self, "isi_a_text")
+            else ""
+        )
+        image_path = (
+            self.gambar_items[0]["path"]
+            if (self.gambar_items and "path" in self.gambar_items[0])
+            else None
+        )
 
         if not modul_text and not image_path:
             image_path = filedialog.askopenfilename(
@@ -65,7 +93,14 @@ class CodeImageAIMixin:
                 filetypes=[("Images", "*.png;*.jpg;*.jpeg;*.bmp")],
             )
 
-        res, err = self.app.analysis_service.generate_langkah_kerja(judul, modul_text, image_path)
+        res, err = self.app.analysis_service.generate_langkah_kerja(
+            judul_sub=judul,
+            modul_text=modul_text,
+            image_path=image_path,
+            cover_data=cover_data,
+            modul_path=modul_path,
+            isi_deskripsi=isi_deskripsi,
+        )
         if err:
             self.show_error("AI Error", err)
             return

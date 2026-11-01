@@ -69,10 +69,14 @@ class App(TkinterDnD.Tk):
         self._build_ui()
 
     def _get_logo_path(self):
-        for name in ("logo.jpeg", "logo.png", "logo.jpg"):
+        candidates = []
+        for name in ("logo.png", "logo.jpeg", "logo.jpg"):
             logo_path = os.path.join(ASSETS_DIR, name)
             if os.path.exists(logo_path):
-                return logo_path
+                candidates.append((os.path.getmtime(logo_path), logo_path))
+        if candidates:
+            candidates.sort(key=lambda x: (x[0], x[1].lower().endswith(".png")), reverse=True)
+            return candidates[0][1]
         return None
 
     def _load_logo_image(self):
@@ -80,9 +84,12 @@ class App(TkinterDnD.Tk):
         if not logo_path:
             return None
 
-        image = Image.open(logo_path)
-        image = image.resize((48, 48), Image.Resampling.LANCZOS)
-        return ImageTk.PhotoImage(image)
+        try:
+            image = Image.open(logo_path)
+            image = image.resize((48, 48), Image.Resampling.LANCZOS)
+            return ImageTk.PhotoImage(image)
+        except Exception:
+            return None
 
     def _build_ui(self):
         self.configure(bg="#f3f6fb")
@@ -121,6 +128,10 @@ class App(TkinterDnD.Tk):
         self.logo_image = self._load_logo_image()
         if self.logo_image:
             ttk.Label(header_frame, image=self.logo_image).pack(side="left", padx=(0, 10))
+            try:
+                self.iconphoto(False, self.logo_image)
+            except Exception:
+                pass
 
         ttk.Label(header_frame, text="Lab Report Generator", style="Header.TLabel").pack(side="left")
         ttk.Label(header_frame, text="v4.2.7", style="Muted.TLabel").pack(side="left", padx=(10, 0), pady=(4, 0))

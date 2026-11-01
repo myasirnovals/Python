@@ -56,7 +56,7 @@ class AnalysisService:
                     text += para.text + "\n"
             elif ext == "doc":
                 if win32 is None:
-                    print("⚠️ pywin32 tidak tersedia untuk membaca file DOC.")
+                    print("[INFO] pywin32 tidak tersedia untuk membaca file DOC.")
                     return ""
                 word_app = None
                 doc_obj = None
@@ -72,10 +72,10 @@ class AnalysisService:
                     if word_app is not None:
                         word_app.Quit()
             else:
-                print("⚠️ Format modul tidak didukung (Gunakan PDF/DOC/DOCX).")
+                print("[INFO] Format modul tidak didukung (Gunakan PDF/DOC/DOCX).")
             return text
         except Exception as e:
-            print(f"⚠️ Gagal membaca modul: {e}")
+            print(f"[ERROR] Gagal membaca modul: {e}")
             return ""
 
     @staticmethod
@@ -134,17 +134,41 @@ class AnalysisService:
         return sentences
 
     @staticmethod
-    def _coerce_five_sentences(text):
+    def _limit_sentences(text, min_sentences=3, max_sentences=5):
+        """Membatasi jumlah kalimat antara 3 sampai 5 tanpa melakukan duplikasi buatan."""
         sentences = AnalysisService._split_sentences(text)
         if not sentences:
             return ""
+        if len(sentences) > max_sentences:
+            return " ".join(sentences[:max_sentences])
+        return " ".join(sentences)
 
-        if len(sentences) >= 5:
-            return " ".join(sentences[:5])
+    @staticmethod
+    def _extract_relevant_modul_excerpt(modul_text, query, max_len=6000):
+        """Mengekstrak potongan modul yang relevan dengan topik atau sub-bab."""
+        if not modul_text:
+            return ""
+        text = str(modul_text).strip()
+        if len(text) <= max_len:
+            return text
 
-        while len(sentences) < 5:
-            sentences.append(sentences[-1])
-        return " ".join(sentences[:5])
+        keywords = [
+            k for k in re.split(r"\W+", str(query).lower())
+            if len(k) > 2 and k not in {"sub", "bab", "tugas", "dan", "yang", "pada", "untuk", "dari"}
+        ]
+        best_pos = -1
+        for kw in keywords:
+            pos = text.lower().find(kw)
+            if pos != -1:
+                best_pos = pos
+                break
+
+        if best_pos != -1:
+            start = max(0, best_pos - 500)
+            end = min(len(text), start + max_len)
+            return text[start:end]
+
+        return text[:max_len]
 
     @staticmethod
     def _format_kode_names(kode_items):
@@ -208,106 +232,106 @@ class AnalysisService:
 
         return "\n".join(lines)
 
-    @staticmethod
-    def _instruksi_kualitas_langkah():
-        return (
-            "\n"
-            "                ATURAN KUALITAS & KUANTITAS:\n"
-            "                1. WAJIB HASILKAN ANTARA MINIMAL 7 SAMPAI MAKSIMAL 12 BARIS LANGKAH.\n"
-            "                2. Jika langkah asli terlalu sedikit (<7): Pecah langkah kompleks menjadi lebih detail.\n"
-            "                3. Jika langkah asli terlalu banyak (>12): Gabungkan langkah-langkah kecil/remeh menjadi satu baris.\n"
-            "                4. ISI HARUS PADAT & TEKNIS: Hindari kalimat \"Buka aplikasi\" saja. Gunakan \"Buka IntelliJ IDEA dan tunggu loading selesai\".\n"
-            "                5. DILARANG memasukkan langkah sampah seperti \"Siapkan PC\", \"Berdoa\", atau \"Selesai\". Langsung ke teknis.\n"
-            "                6. JANGAN PAKAI NOMOR (1. 2. 3.) dan Bullet Points (*, -, •). Python yang akan memberi nomor nanti.\n"
-            "                "
-        )
-
-    def generate_langkah_kerja(self, judul_sub, modul_text, image_path=None):
+    def generate_langkah_kerja(
+        self,
+        judul_sub,
+        modul_text="",
+        image_path=None,
+        cover_data=None,
+        modul_path="",
+        isi_deskripsi="",
+    ):
+        """Generate langkah kerja teknis bergaya catatan praktikum manusia (7-12 baris)."""
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
-        
+
         time.sleep(1)
 
-        instruksi = self._instruksi_kualitas_langkah()
-        if modul_text:
-            prompt = (
-                "\n                    Peran: Asisten Lab Komputer.\n"
-                f"                    Tugas: Ekstrak Langkah Kerja Praktikum untuk sub-bab \"{judul_sub}\".\n\n"
-                "                    Konteks Modul:\n"
-                f"                    {modul_text}\n\n"
-                "                    Instruksi Ekstraksi:\n"
-                f"                    1. Cari area teks yang membahas \"{judul_sub}\".\n"
-                "                    2. Ambil intisari langkah-langkahnya.\n\n"
-                f"                    {instruksi}\n"
-                "                    "
-            )
-            raw = self.ai_client.ask(prompt)
-        else:
-            prompt = (
-                "\n                        Peran: Asisten Lab Komputer.\n"
-                "                        Tugas: Buat simulasi Langkah Kerja berdasarkan Screenshot ini.\n\n"
-                "                        Instruksi Analisa:\n"
-                "                        1. Lihat UI/Codingan di gambar.\n"
-                "                        2. Rekonstruksi urutan langkah logis (step-by-step) yang dilakukan user untuk mencapai hasil di gambar tersebut.\n\n"
-                f"                        {instruksi}\n"
-                "                        "
-            )
-            raw = self.ai_client.ask(prompt, image_path)
+        judul_laporan, materi_modul = self.prompt_builder.resolve_identifiers(
+            cover_data, modul_path, modul_text
+        )
+        modul_excerpt = self._extract_relevant_modul_excerpt(
+            modul_text, judul_sub, max_len=4000
+        )
+
+        has_image = bool(image_path and os.path.exists(image_path))
+        prompt = self.prompt_builder.build_langkah_kerja_prompt(
+            judul_sub=judul_sub,
+            judul_laporan=judul_laporan,
+            materi_modul=materi_modul,
+            modul_excerpt=modul_excerpt,
+            has_image=has_image,
+            image_context=isi_deskripsi,
+        )
+
+        valid_image = image_path if has_image else None
+        raw = self.ai_client.ask(prompt, valid_image)
 
         if not raw or raw.startswith("Error") or raw.startswith("Gagal"):
             return None, f"AI gagal merespon: {raw}"
 
         return self.format_langkah_kerja(raw), None
 
-    def generate_penjelasan_singkat(self, judul_sub, modul_text):
+    def generate_penjelasan_singkat(
+        self,
+        judul_sub,
+        modul_text="",
+        cover_data=None,
+        modul_path="",
+    ):
+        """Generate draf penjelasan singkat tepat 2 paragraf, 3-5 kalimat per paragraf."""
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
         if not judul_sub or not str(judul_sub).strip():
             return None, "Judul sub-bab/topik tugas belum diisi."
-        if not modul_text or not str(modul_text).strip():
-            return None, "Modul belum dimuat. Muat file modul terlebih dahulu."
 
         judul = str(judul_sub).strip()
-        modul_ringkas = self._safe_text(modul_text, max_len=12000)
+        judul_laporan, materi_modul = self.prompt_builder.resolve_identifiers(
+            cover_data, modul_path, modul_text
+        )
+        modul_excerpt = self._extract_relevant_modul_excerpt(
+            modul_text, judul, max_len=8000
+        )
 
-        prompt = (
-            "Peran: Asisten akademik penyusun laporan praktikum.\n"
-            f"Fokus topik: {judul}\n\n"
-            "Sumber utama (modul):\n"
-            f"{modul_ringkas}\n\n"
-            "Instruksi WAJIB:\n"
-            "1. Tulis tepat 1 paragraf.\n"
-            "2. Tulis tepat 5 kalimat.\n"
-            "3. Semua isi harus relevan langsung dengan fokus topik.\n"
-            "4. Gunakan hanya informasi dari sumber utama; jangan halusinasi.\n"
-            "5. Gunakan Bahasa Indonesia formal, jelas, dan ringkas.\n"
-            "6. Dilarang bullet list, nomor, atau judul tambahan.\n"
+        prompt = self.prompt_builder.build_penjelasan_singkat_prompt(
+            judul_sub=judul,
+            judul_laporan=judul_laporan,
+            materi_modul=materi_modul,
+            modul_excerpt=modul_excerpt,
         )
 
         result = self.ai_client.ask(prompt)
         if not result or result.startswith("Error") or result.startswith("Gagal"):
             return None, "Gagal generate penjelasan singkat."
 
-        normalized = self._clean_single_paragraph(result)
-        sentence_count = len(self._split_sentences(normalized))
+        cleaned = self.prompt_builder.sanitize_ai_output(result, is_kesimpulan=False)
+        paragraphs = [p.strip() for p in cleaned.split("\n") if p.strip()]
+        formatted_paras = []
+        for p in paragraphs[:2]:
+            sentences = self._split_sentences(p)
+            if len(sentences) > 5:
+                p = " ".join(sentences[:5])
+            formatted_paras.append(p)
 
-        if sentence_count != 5:
-            repair_prompt = (
-                "Perbaiki teks berikut menjadi tepat 1 paragraf berisi tepat 5 kalimat.\n"
-                "Jangan menambah fakta baru di luar teks yang diberikan.\n\n"
-                f"Teks:\n{normalized}\n"
-            )
-            repaired = self.ai_client.ask(repair_prompt)
-            if repaired and not repaired.startswith("Error") and not repaired.startswith("Gagal"):
-                normalized = self._clean_single_paragraph(repaired)
-
-        final_text = self._coerce_five_sentences(normalized)
+        final_text = "\n\n".join(formatted_paras)
         if not final_text:
             return None, "Gagal memformat penjelasan singkat."
 
         return final_text, None
 
-    def generate_analysis(self, tipe, isi_a_text, kode_items, gambar_items, template_choice):
+    def generate_analysis(
+        self,
+        tipe,
+        isi_a_text,
+        kode_items,
+        gambar_items,
+        template_choice,
+        judul_sub="Sub-Bab Analisa",
+        modul_text="",
+        cover_data=None,
+        modul_path="",
+    ):
+        """Generate draf analisa sub-bab tepat 2 paragraf (3-5 kalimat per paragraf) bebas AI Slop."""
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
 
@@ -317,16 +341,44 @@ class AnalysisService:
         if tipe == "1":
             isi_a = self.concat_kode_for_prompt(kode_items)
 
-        prompt = self.prompt_builder.build_prompt(
-            tipe,
-            isi_a,
-            self.prompt_builder.instruksi_gaya(),
+        judul_laporan, materi_modul = self.prompt_builder.resolve_identifiers(
+            cover_data, modul_path, modul_text
         )
-        image_path = gambar_items[0]["path"] if gambar_items else None
+        modul_excerpt = self._extract_relevant_modul_excerpt(
+            modul_text, judul_sub, max_len=6000
+        )
+
+        image_path = (
+            gambar_items[0]["path"]
+            if (gambar_items and os.path.exists(gambar_items[0].get("path", "")))
+            else None
+        )
+
+        prompt = self.prompt_builder.build_analisa_prompt(
+            pilih_tipe=tipe,
+            isi_a=isi_a,
+            judul_sub=judul_sub,
+            judul_laporan=judul_laporan,
+            materi_modul=materi_modul,
+            modul_excerpt=modul_excerpt,
+            has_image=bool(image_path),
+        )
+
         result = self.ai_client.ask(prompt, image_path)
 
         if not result or result.startswith("Error") or result.startswith("Gagal"):
-             return None, "Gagal generate analisa."
+            return None, "Gagal generate analisa."
+
+        result = self.prompt_builder.sanitize_ai_output(result, is_kesimpulan=False)
+
+        paragraphs = [p.strip() for p in result.split("\n") if p.strip()]
+        formatted_paras = []
+        for p in paragraphs[:2]:
+            sentences = self._split_sentences(p)
+            if len(sentences) > 5:
+                p = " ".join(sentences[:5])
+            formatted_paras.append(p)
+        result = "\n\n".join(formatted_paras)
 
         if template_choice == "1" and result:
             result = result.replace("\n\n", "\n")
@@ -351,34 +403,55 @@ class AnalysisService:
             "1. Jawab singkat dan jelas (2-4 kalimat).\n"
             "2. Jangan membuat informasi di luar modul.\n"
             "3. Gunakan Bahasa Indonesia formal.\n"
+            "4. HINDARI kata \"anda\".\n"
         )
 
         result = self.ai_client.ask(prompt)
         if not result or "Gagal" in result:
             return None, "AI tidak bisa menjawab."
-        return result, None
+        return self.prompt_builder.sanitize_ai_output(result), None
 
-    def generate_conclusion(self, bab1_items, bab2_items):
+    def generate_conclusion(
+        self,
+        bab1_items,
+        bab2_items,
+        cover_data=None,
+        modul_text="",
+        modul_path="",
+    ):
+        """Generate draf kesimpulan tepat 3 paragraf (3-5 kalimat per paragraf) bebas AI Slop."""
         if not self.ensure_ready():
             return None, "AI tidak bisa connect. Periksa API key."
 
-        bab1_text = self._format_bab_items(bab1_items, "BAB 1")
-        bab2_text = self._format_bab_items(bab2_items, "BAB 2")
+        bab1_text = self._format_bab_items(bab1_items, "BAB 1 (HASIL PRAKTIKUM)")
+        bab2_text = self._format_bab_items(bab2_items, "BAB 2 (TUGAS)")
 
-        prompt = (
-            "Peran: Asisten penyusun laporan praktikum.\n"
-            "Tugas: Buat kesimpulan laporan berdasarkan ringkasan berikut.\n\n"
-            f"{bab1_text}\n\n"
-            f"{bab2_text}\n\n"
-            "Instruksi:\n"
-            "1. Tulis tepat 3 paragraf.\n"
-            "2. Tiap paragraf 5-10 kalimat.\n"
-            "3. Gunakan Bahasa Indonesia formal dan akademis.\n"
-            "4. Fokus pada tujuan, hasil, kendala, dan pembelajaran.\n"
-            "5. Jangan gunakan tanda kutip atau backtick.\n"
+        judul_laporan, materi_modul = self.prompt_builder.resolve_identifiers(
+            cover_data, modul_path, modul_text
+        )
+        modul_excerpt = self._safe_text(modul_text, max_len=4000)
+
+        prompt = self.prompt_builder.build_kesimpulan_prompt(
+            bab1_text=bab1_text,
+            bab2_text=bab2_text,
+            judul_laporan=judul_laporan,
+            materi_modul=materi_modul,
+            modul_excerpt=modul_excerpt,
         )
 
         result = self.ai_client.ask(prompt)
-        if not result or "Gagal" in result:
+        if not result or result.startswith("Error") or result.startswith("Gagal"):
             return None, "AI tidak bisa menjawab."
+
+        result = self.prompt_builder.sanitize_ai_output(result, is_kesimpulan=True)
+
+        paragraphs = [p.strip() for p in result.split("\n") if p.strip()]
+        formatted_paras = []
+        for p in paragraphs[:3]:
+            sentences = self._split_sentences(p)
+            if len(sentences) > 5:
+                p = " ".join(sentences[:5])
+            formatted_paras.append(p)
+        result = "\n\n".join(formatted_paras)
+
         return result, None

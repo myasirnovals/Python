@@ -59,12 +59,12 @@ class LegacyCliGenerator:
         if not path_modul.strip():
             return ""
 
-        print("   📖 Sedang membaca isi modul...")
+        print("   [DOC] Sedang membaca isi modul...")
         isi_teks_modul = self.analysis_service.read_modul_text(path_modul)
         if isi_teks_modul:
-            print(f"   ✅ Modul berhasil dimuat! ({len(isi_teks_modul)} karakter)")
+            print(f"   [OK] Modul berhasil dimuat! ({len(isi_teks_modul)} karakter)")
         else:
-            print("   ⚠️ Modul kosong atau gagal dibaca.")
+            print("   [WARN] Modul kosong atau gagal dibaca.")
         return isi_teks_modul
 
     @staticmethod
@@ -76,7 +76,7 @@ class LegacyCliGenerator:
                     3. Jika langkah asli terlalu banyak (>12): Gabungkan langkah-langkah kecil/remeh menjadi satu baris.
                     4. ISI HARUS PADAT & TEKNIS: Hindari kalimat "Buka aplikasi" saja. Gunakan "Buka IntelliJ IDEA dan tunggu loading selesai".
                     5. DILARANG memasukkan langkah sampah seperti "Siapkan PC", "Berdoa", atau "Selesai". Langsung ke teknis.
-                    6. JANGAN PAKAI NOMOR (1. 2. 3.) dan Bullet Points (*, -, •). Python yang akan memberi nomor nanti.
+                    6. JANGAN PAKAI NOMOR (1. 2. 3.) dan Bullet Points (*, -, -). Python yang akan memberi nomor nanti.
                     """
 
     def _collect_source_code(self):
@@ -132,7 +132,7 @@ class LegacyCliGenerator:
                         """
             return self.gemini_client.ask(prompt_langkah)
 
-        print("      ⚠️ Tidak ada file modul. AI akan melihat dari screenshot.")
+        print("      [WARN] Tidak ada file modul. AI akan melihat dari screenshot.")
         path_sementara = input("      Masukkan path gambar untuk dianalisa: ").replace('"', "")
         if path_sementara and os.path.exists(path_sementara):
             prompt_langkah = f"""
@@ -147,21 +147,21 @@ class LegacyCliGenerator:
                             """
             return self.gemini_client.ask(prompt_langkah, path_sementara)
 
-        print("      ❌ Gambar tidak ditemukan. Beralih ke manual.")
+        print("      [ERROR] Gambar tidak ditemukan. Beralih ke manual.")
         return ""
 
     def _collect_langkah_kerja(self, judul_sub, isi_teks_modul):
         print("\n   [Input Langkah Kerja]")
         raw_isi = ""
-        pakai_ai = input("   🤖 Gunakan AI untuk buat langkah kerja? (y/n): ").lower()
+        pakai_ai = input("   [AI] Gunakan AI untuk buat langkah kerja? (y/n): ").lower()
 
         if pakai_ai == "y":
-            print("      ⏳ Sedang berpikir...")
+            print("      [...] Sedang berpikir...")
             raw_isi = self._generate_langkah_kerja_ai(judul_sub, isi_teks_modul)
             if raw_isi and "Gagal" not in raw_isi:
-                print("      ✅ Langkah Kerja dari AI siap! (Format akan otomatis dirapikan)")
+                print("      [OK] Langkah Kerja dari AI siap! (Format akan otomatis dirapikan)")
             else:
-                print("      ⚠️ AI tidak bisa menjawab. Silakan ketik manual.")
+                print("      [WARN] AI tidak bisa menjawab. Silakan ketik manual.")
                 raw_isi = self.input_reader.input_multiline("   Masukkan Langkah Kerja")
         else:
             print("   (Ketik langkah per baris, Python akan memberi nomor otomatis)")
@@ -175,7 +175,7 @@ class LegacyCliGenerator:
         nomor_urut = 1
         for baris in lines:
             teks = baris.strip()
-            teks_bersih = teks.lstrip(" *-•.1234567890").strip()
+            teks_bersih = teks.lstrip(" *--.1234567890").strip()
             if teks_bersih:
                 if nomor_urut == 1:
                     item_baru = f"\u200B{nomor_urut}. {teks_bersih}"
@@ -220,14 +220,14 @@ class LegacyCliGenerator:
     def _collect_analisa(self, pilih_tipe, isi_a, path_gambar_utama, pilihan_tpl):
         analisa = ""
         print("\n   [Input Analisa]")
-        if input("   🤖 Gunakan AI untuk analisa? (y/n): ").lower() == "y":
+        if input("   [AI] Gunakan AI untuk analisa? (y/n): ").lower() == "y":
             instruksi_gaya = self.prompt_builder.instruksi_gaya()
             prompt = self.prompt_builder.build_prompt(pilih_tipe, isi_a, instruksi_gaya)
             analisa = self.gemini_client.ask(prompt, path_gambar_utama)
             if pilihan_tpl == "1" and analisa:
                 analisa = analisa.replace("\n\n", "\n")
                 analisa = "\t" + analisa.replace("\n", "\n\t")
-            print(f"   ✅ Hasil AI: Selesai ({len(analisa)} karakter)")
+            print(f"   [OK] Hasil AI: Selesai ({len(analisa)} karakter)")
         else:
             analisa = self.input_reader.input_multiline("   Masukkan Analisa Manual")
             if pilihan_tpl == "1" and analisa:
@@ -312,25 +312,25 @@ class LegacyCliGenerator:
             nama_file = f"Laporan_Modul_{nomor_modul}_{nama.replace(' ', '_')}.docx"
             doc.render(context, autoescape=True)
             doc.save(nama_file)
-            print(f"✅ BERHASIL! File tersimpan: {nama_file}")
+            print(f"[OK] BERHASIL! File tersimpan: {nama_file}")
 
             self.report_service.postprocess_document(nama_file)
 
-            print(f"🎉 SELESAI! File {nama_file} sudah rapi & rapat.")
+            print(f"[SUKSES] SELESAI! File {nama_file} sudah rapi & rapat.")
         except Exception as e:
-            print(f"❌ Gagal render: {e}")
+            print(f"[ERROR] Gagal render: {e}")
 
     def run(self):
         pilihan_tpl, nama_template = self._select_template()
 
         if not os.path.exists(nama_template):
-            print(f"❌ Error: File '{nama_template}' tidak ditemukan!")
+            print(f"[ERROR] Error: File '{nama_template}' tidak ditemukan!")
             print("   Pastikan Anda sudah membuat 2 file template sesuai panduan.")
             return
 
         model_name = self.gemini_client.get_active_model()
         if not model_name:
-            print("⛔ Program berhenti karena AI tidak bisa connect.")
+            print("[STOP] Program berhenti karena AI tidak bisa connect.")
             return
 
         doc = DocxTemplate(nama_template)
