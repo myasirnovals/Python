@@ -1,13 +1,8 @@
-class ConsoleInput:
-    """Encapsulate interactive CLI input operations."""
+"""Backward-compatibility shim for CLI console input.
 
-    def input_multiline(self, label):
-        print(f"{label} (Tekan Enter 2x jika selesai):")
-        lines = []
-        while True:
-            line = input()
-            if line:
-                lines.append(line)
-            else:
-                break
-        return "\n".join(lines)
+All CLI components now reside in `app.cli`.
+"""
+
+from .cli.input_helpers import ConsoleInput
+
+__all__ = ["ConsoleInput"]

@@ -65,6 +65,14 @@ __pycache__/
 
 # nuitka
 nuitka-crash-report.xml
+*.build/
+*.dist/
+main.build/
+main.dist/
+
+# Runtime / Crash Logs
+crash.log
+selftest.log
 
 # Distribution / packaging
 .Python
@@ -91,6 +99,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+!main.spec
 
 # Installer logs
 pip-log.txt

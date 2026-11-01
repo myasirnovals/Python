@@ -2,13 +2,43 @@ import os
 import re
 
 try:
+    import pythoncom
     import win32com.client as win32
 except Exception:  # pragma: no cover - optional dependency
+    pythoncom = None
     win32 = None
 from docx import Document
+from docx.oxml.ns import qn
 from docxtpl import DocxTemplate, RichText, Listing
 
 from app.doc_helpers import ImageDocumentHelper
+
+# Karakter yang dilarang XML 1.0. Word menolak membuka dokumen yang memuatnya.
+_XML_ILLEGAL_CHARS = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+
+
+def _log(message):
+    """print() yang tidak pernah melempar error.
+
+    Di .exe tanpa console sys.stdout bernilai None, dan di console cp1252 emoji
+    memicu UnicodeEncodeError. Keduanya tidak boleh menggagalkan pembuatan laporan.
+    """
+    try:
+        print(message)
+    except Exception:
+        pass
+
+
+def _sanitize_for_xml(value):
+    """Buang karakter kontrol ilegal dari semua string di context (rekursif)."""
+    if isinstance(value, str):
+        return _XML_ILLEGAL_CHARS.sub("", value)
+    if isinstance(value, dict):
+        return {k: _sanitize_for_xml(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_sanitize_for_xml(v) for v in value]
+    # Listing / RichText / InlineImage dibiarkan apa adanya.
+    return value
 
 
 class ReportService:
@@ -80,12 +110,19 @@ class ReportService:
         """Menghapus baris yang berisi ##HAPUS##"""
         try:
             doc = Document(output_path)
-            for p in list(doc.paragraphs):
-                if "##HAPUS##" in p.text:
-                    p._element.getparent().remove(p._element)
+            for p in list(doc.element.body.iter(qn("w:p"))):
+                if "##HAPUS##" not in "".join(p.itertext()):
+                    continue
+                parent = p.getparent()
+                # Sel tabel wajib punya minimal satu <w:p>; kosongkan teksnya saja.
+                if parent.tag == qn("w:tc") and len(parent.findall(qn("w:p"))) == 1:
+                    for t in p.iter(qn("w:t")):
+                        t.text = (t.text or "").replace("##HAPUS##", "")
+                    continue
+                parent.remove(p)
             doc.save(output_path)
-        except Exception:
-            pass
+        except Exception as e:
+            _log(f"Peringatan: pembersihan ##HAPUS## gagal: {e}")
 
     @staticmethod
     def _hapus_paragraf_kosong_spesifik(output_path):
@@ -93,7 +130,7 @@ class ReportService:
         Fungsi 'Sniper': Hanya menghapus baris kosong di area Langkah Kerja,
         tanpa merusak Cover.
         """
-        print("🎯 Membersihkan spasi renggang...")
+        _log("Membersihkan spasi renggang...")
         try:
             doc = Document(output_path)
             area_aman = False
@@ -121,7 +158,7 @@ class ReportService:
                     pass
             doc.save(output_path)
         except Exception as e:
-            print(f"⚠️ Warning pembersihan: {e}")
+            _log(f"Warning pembersihan: {e}")
 
     @staticmethod
     def _bersihkan_karakter_ilegal(teks):
@@ -260,29 +297,51 @@ class ReportService:
 
     @staticmethod
     def _update_toc_word(nama_file):
-        print("      ⏳ Sedang melakukan Auto-Update Daftar Isi & Gambar...")
+        _log("Sedang melakukan Auto-Update Daftar Isi & Gambar...")
         if win32 is None:
-            print("      ⚠️ Win32COM tidak tersedia. Lewati update TOC otomatis.")
+            _log("Win32COM tidak tersedia. Lewati update TOC otomatis.")
             return
+
+        word_app = None
+        doc = None
+        com_initialized = False
         try:
+            if pythoncom is not None:
+                pythoncom.CoInitialize()
+                com_initialized = True
+
             path_lengkap = os.path.abspath(nama_file)
-            word_app = win32.Dispatch("Word.Application")
+            # DispatchEx = instance Word baru & terpisah. Dispatch() biasa akan
+            # menempel ke Word milik user yang sedang terbuka lalu menutupnya (Quit).
+            word_app = win32.DispatchEx("Word.Application")
             word_app.Visible = False
             word_app.DisplayAlerts = False
 
-            doc = word_app.Documents.Open(path_lengkap)
+            doc = word_app.Documents.Open(path_lengkap, ConfirmConversions=False)
             for toc in doc.TablesOfContents:
                 toc.Update()
             doc.Fields.Update()
             doc.Save()
-            doc.Close()
-            word_app.Quit()
-            print("      ✅ Auto-Update Selesai! Dokumen siap cetak.")
+            _log("Auto-Update Selesai! Dokumen siap cetak.")
         except Exception as e:
-            print(
-                "      ⚠️ Gagal Auto-Update (Buka file manual lalu tekan Ctrl+A -> F9): "
+            _log(
+                "Gagal Auto-Update (Buka file manual lalu tekan Ctrl+A -> F9): "
                 f"{e}"
             )
+        finally:
+            # Selalu tutup, kalau tidak WINWORD.EXE tertinggal dan mengunci file.
+            if doc is not None:
+                try:
+                    doc.Close(False)
+                except Exception:
+                    pass
+            if word_app is not None:
+                try:
+                    word_app.Quit()
+                except Exception:
+                    pass
+            if com_initialized:
+                pythoncom.CoUninitialize()
 
     def build_bab2_context(self, doc, bab2_items, template_choice="1"):
         daftar_tugas = []
@@ -393,7 +452,7 @@ class ReportService:
                 isi_jawaban = raw_analisa_tugas
                 label_point_a = "Langkah Kerja"
                 isi_point_a = isi_deskripsi
-                isi_analisa = raw_analisa_tugas
+                isi_analisa_final = raw_analisa_tugas
             else:
                 isi_soal = ""
                 isi_jawaban = raw_analisa_tugas
@@ -437,7 +496,7 @@ class ReportService:
         Fungsi 'Preman': Membuka file hasil generate, masuk ke setiap tabel,
         dan menghapus paksa baris (row) yang tidak ada teksnya sama sekali.
         """
-        print(f"🕵️  Memulai operasi pembersihan baris kosong di {output_path}...")
+        _log(f"Memulai operasi pembersihan baris kosong di {output_path}...")
         try:
             # Buka ulang dokumen yang baru saja disimpan
             doc_fix = Document(output_path)
@@ -462,10 +521,10 @@ class ReportService:
 
             # Simpan kembali (Overwrite)
             doc_fix.save(output_path)
-            print(f"✅ Selesai! Berhasil menghapus {total_hapus} baris hantu yang renggang.")
+            _log(f"Selesai! Berhasil menghapus {total_hapus} baris hantu yang renggang.")
             
         except Exception as e:
-            print(f"⚠️ Gagal melakukan pembersihan: {e}")
+            _log(f"Gagal melakukan pembersihan: {e}")
 
     def render_report(
         self, template_choice, cover, bab1_items, bab2_items, kesimpulan, output_path
@@ -493,8 +552,13 @@ class ReportService:
             "list_kesimpulan": list_paragraf_kesimpulan,
         }
 
-        doc.render(context)
-        doc.save(output_path)
+        try:
+            # autoescape=True WAJIB: tanpa itu karakter &, <, > di teks (analisa,
+            # judul, caption, dll.) masuk mentah ke XML dan merusak dokumen Word.
+            doc.render(_sanitize_for_xml(context), autoescape=True)
+            doc.save(output_path)
+        finally:
+            self.image_helper.cleanup_temp_files()
 
         self._hapus_baris_hantu(output_path)
         self._hapus_paragraf_kosong_spesifik(output_path)

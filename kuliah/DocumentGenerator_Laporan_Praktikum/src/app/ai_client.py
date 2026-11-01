@@ -1,5 +1,6 @@
 import base64
 import json
+import mimetypes
 import os
 import time
 
@@ -28,13 +29,18 @@ class GeminiClient:
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={self.api_key}"
         print("\n🔍 Mengecek ketersediaan model pilihan...")
         try:
-            resp = requests.get(url)
+            # timeout wajib: tanpa ini window GUI jadi 'Not Responding' kalau koneksi gantung.
+            resp = requests.get(url, timeout=15)
             data = resp.json()
             if "error" in data:
                 print(f"❌ Error API Key: {data['error']['message']}")
-                return []
+                return None
 
-            available_models = [m["name"].replace("models/", "") for m in data.get("models", [])]
+            available_models = [
+                m["name"].replace("models/", "")
+                for m in data.get("models", [])
+                if "generateContent" in m.get("supportedGenerationMethods", ["generateContent"])
+            ]
 
             # Pilih model pertama yang cocok dengan daftar prioritas kita
             for target in self.priority_models:
@@ -89,11 +95,12 @@ class GeminiClient:
             parts = [{"text": prompt_text}]
             if image_path and os.path.exists(image_path):
                 try:
+                    mime_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
                     with open(image_path, "rb") as f:
                         b64_data = base64.b64encode(f.read()).decode("utf-8")
                         parts.append({
                             "inline_data": {
-                                "mime_type": "image/jpeg",
+                                "mime_type": mime_type,
                                 "data": b64_data,
                             }
                         })

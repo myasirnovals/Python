@@ -19,8 +19,17 @@ from ui.tabs.results_tab import ResultsTab
 from ui.tabs.tasks_tab import TasksTab
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES_DIR = os.path.join(BASE_DIR, "..", "..", "templates")
-ASSETS_DIR = os.path.join(BASE_DIR, "..", "..", "assets")
+
+def _resolve_resource_dir(folder_name: str) -> str:
+    bundled_base = getattr(sys, "_MEIPASS", None)
+    if bundled_base:
+        bundled_path = os.path.join(bundled_base, folder_name)
+        if os.path.exists(bundled_path):
+            return bundled_path
+    return os.path.abspath(os.path.join(BASE_DIR, "..", "..", folder_name))
+
+TEMPLATES_DIR = _resolve_resource_dir("templates")
+ASSETS_DIR = _resolve_resource_dir("assets")
 
 
 class App(TkinterDnD.Tk):
@@ -60,16 +69,10 @@ class App(TkinterDnD.Tk):
         self._build_ui()
 
     def _get_logo_path(self):
-        bundled_base = getattr(sys, "_MEIPASS", None)
-        if bundled_base:
-            bundled_logo = os.path.join(bundled_base, "assets", "logo.jpeg")
-            if os.path.exists(bundled_logo):
-                return bundled_logo
-
-        local_logo = os.path.join(ASSETS_DIR, "logo.jpeg")
-        if os.path.exists(local_logo):
-            return local_logo
-
+        for name in ("logo.jpeg", "logo.png", "logo.jpg"):
+            logo_path = os.path.join(ASSETS_DIR, name)
+            if os.path.exists(logo_path):
+                return logo_path
         return None
 
     def _load_logo_image(self):

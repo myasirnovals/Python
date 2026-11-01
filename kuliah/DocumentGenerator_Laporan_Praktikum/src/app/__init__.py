@@ -1,13 +1,15 @@
 """Application package exports for OOP-oriented architecture."""
 
+from .cli.generator import LegacyCliGenerator
+from .cli.input_helpers import ConsoleInput
+from .cli.sections import ReportSectionsCollector
 from .doc_helpers import ImageDocumentHelper
-from .input_helpers import ConsoleInput
 from .prompts import PromptBuilder
-from .sections import ReportSectionsCollector
 
 __all__ = [
-	"ConsoleInput",
-	"ImageDocumentHelper",
-	"PromptBuilder",
-	"ReportSectionsCollector",
+    "ConsoleInput",
+    "ImageDocumentHelper",
+    "LegacyCliGenerator",
+    "PromptBuilder",
+    "ReportSectionsCollector",
 ]
