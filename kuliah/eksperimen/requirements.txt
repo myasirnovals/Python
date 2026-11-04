@@ -1,0 +1,22 @@
+# Dependensi Eksperimen Restorasi Wicara Cleft Lip and Palate
+# Python 3.11 (Disarankan untuk kompatibilitas PyTorch CUDA di Windows)
+
+# Core Deep Learning & Audio Processing
+torch>=2.2.0
+torchaudio>=2.2.0
+numpy>=1.24.0,<2.0.0
+scipy>=1.11.0
+soundfile>=0.12.0
+librosa>=0.10.0
+
+# Konfigurasi & Logging
+pyyaml>=6.0.0
+tqdm>=4.66.0
+
+# Evaluasi Metrik Objektif Akustik
+pystoi>=0.4.0
+pesq>=0.0.4
+
+# Evaluasi Hilir ASR
+transformers>=4.40.0
+faster-whisper>=1.0.0

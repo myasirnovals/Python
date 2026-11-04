@@ -1,0 +1,71 @@
+# ==============================================================================
+# Konfigurasi Eksperimen Google Colab (GPU T4 / A100 Terakselerasi)
+# Model: Score-Based Audio Diffusion Model (VP-SDE) + Adaptive Gain Normalization
+# ==============================================================================
+
+paths:
+  manifest_path: "dataset_manifest.csv"
+  ultrasuite_base_dir: "data/UltraSuite"
+  split_manifest_dir: "data/splits"
+  checkpoint_dir: "checkpoints"
+  log_dir: "logs"
+  result_dir: "results"
+
+audio:
+  sample_rate: 22050
+  channels: 1
+  target_dbfs: -23.0
+  max_gain_factor: 90.0
+  segment_length_sec: 2.0
+
+stft:
+  n_fft: 512
+  hop_length: 128
+  win_length: 512
+  window_type: "hann"
+  num_freq_bins: 257
+
+sde:
+  type: "VP"
+  beta_min: 0.1
+  beta_max: 20.0
+  num_timesteps: 1000
+  eps: 1.0e-5
+
+model:
+  in_channels: 2
+  cond_channels: 2
+  out_channels: 2
+  base_channels: 32
+  channel_mult: [1, 2, 4, 8]
+  num_res_blocks: 2
+  time_embed_dim: 128
+  dropout: 0.1
+
+loss:
+  gamma_plosive: 0.25
+  plosive_freq_min_hz: 1500
+  plosive_freq_max_hz: 8000
+
+solver:
+  method: "heun"
+  use_ode: true                # Menggunakan Deterministic Probability Flow ODE (bebas desis derau acak)
+  num_steps: 30
+  corrector_steps: 0           # 0 untuk ODE murni yang stabil tanpa injeksi derau liar
+  snr: 0.16
+
+training:
+  batch_size: 4              # Ukuran mini-batch per langkah (hemat VRAM GPU T4: ~2-3 GB)
+  grad_accum_steps: 4        # Akumulasi 4 langkah -> Batch size efektif = 4 x 4 = 16
+  use_amp: true              # FP16 Automatic Mixed Precision untuk kecepatan 2x & hemat memori
+  learning_rate: 2.0e-4
+  weight_decay: 1.0e-4
+  epochs: 50
+  early_check_epoch: 10        # Evaluasi dini kualitas restorasi (Fail-Fast mechanism)
+  max_allowed_wer: 30.0        # Batas ambang WER maksimum (%) pada epoch ke-10
+  num_early_check_samples: 5   # Jumlah sampel validasi untuk uji cepat ASR
+  grad_clip_norm: 1.0
+  save_every_epochs: 5
+  val_every_epochs: 1
+  num_workers: 2
+  seed: 42

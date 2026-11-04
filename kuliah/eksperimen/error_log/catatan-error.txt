@@ -1,0 +1,55 @@
+catatan error eksperimen:
+ === METRIK AKUSTIK OBJEKTIF ===
+ESTOI (Intelligibility) : -0.0036 (Target: > 0.85)
+PESQ WB (Quality)       : 1.1309 (Target: > 3.0)
+SI-SDR                  : -46.12 dB
+/usr/local/lib/python3.13/dist-packages/huggingface_hub/utils/_auth.py:138: UserWarning: 
+Error while fetching `HF_TOKEN` secret value from your vault: 'Requesting secret HF_TOKEN timed out. Secrets can only be fetched when running from the Colab UI.'.
+  warnings.warn(f"\nError while fetching `HF_TOKEN` secret value from your vault: '{str(e)}'.")
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+---------------------------------------------------------------------------
+TypeError                                 Traceback (most recent call last)
+/tmp/ipykernel_2541/1111331551.py in <cell line: 0>()
+     12     # 2. Pengenalan Wicara Whisper ASR
+     13     asr_eval = WhisperEvaluator(model_size="small", device="cpu", compute_type="int8")
+---> 14     eval_orig = asr_eval.evaluate_utterance(str(sample_wav_path), sample_row["prompt_text"])
+     15     eval_rest = asr_eval.evaluate_utterance(output_result, sample_row["prompt_text"])
+     16 
+
+4 frames/content/drive/MyDrive/Data/perkuliahan/Penelitian/Pengumpulan Berkas/Proposal/Yasir Noval/eksperimen/evaluate/asr_whisper.py in evaluate_utterance(self, audio_path, ground_truth_text)
+     93     def evaluate_utterance(self, audio_path: str, ground_truth_text: str) -> Dict[str, Any]:
+     94         """Evaluasi satu rekaman audio terhadap ground truth teks."""
+---> 95         hyp_text = self.transcribe_audio_file(audio_path, language="en")
+     96         wer, cer = compute_wer_cer(ground_truth_text, hyp_text)
+     97         return {
+
+/content/drive/MyDrive/Data/perkuliahan/Penelitian/Pengumpulan Berkas/Proposal/Yasir Noval/eksperimen/evaluate/asr_whisper.py in transcribe_audio_file(self, audio_path, language)
+     82         Bahasa wicara UltraSuite adalah bahasa Inggris (anak-anak UK).
+     83         """
+---> 84         segments, _ = self.model.transcribe(
+     85             audio_path,
+     86             language=language,
+
+/usr/local/lib/python3.13/dist-packages/faster_whisper/transcribe.py in transcribe(self, audio, language, task, log_progress, beam_size, best_of, patience, length_penalty, repetition_penalty, no_repeat_ngram_size, temperature, compression_ratio_threshold, log_prob_threshold, no_speech_threshold, condition_on_previous_text, prompt_reset_on_temperature, initial_prompt, prefix, suppress_blank, suppress_tokens, without_timestamps, max_initial_timestamp, word_timestamps, prepend_punctuations, append_punctuations, multilingual, vad_filter, vad_parameters, max_new_tokens, chunk_length, clip_timestamps, hallucination_silence_threshold, hotwords, language_detection_threshold, language_detection_segments)
+    874 
+    875         if not isinstance(audio, np.ndarray):
+--> 876             audio = decode_audio(audio, sampling_rate=sampling_rate)
+    877 
+    878         duration = audio.shape[0] / sampling_rate
+
+/usr/local/lib/python3.13/dist-packages/faster_whisper/audio.py in decode_audio(input_file, sampling_rate, split_stereo)
+     44     dtype = None
+     45 
+---> 46     with av.open(input_file, mode="r", metadata_errors="ignore") as container:
+     47         frames = container.decode(audio=0)
+     48         frames = _ignore_invalid_frames(frames)
+
+/usr/local/lib/python3.13/dist-packages/av/container/core.py in av.container.core.open()
+    477 
+    478 
+--> 479 def open(
+    480     file,
+    481     mode=None,
+
+TypeError: open() got an unexpected keyword argument 'metadata_errors'

@@ -1,0 +1,189 @@
+speaker_id,session,file_id,prompt_text,duration_sec,sample_rate,channels,gender,age_years,cleft_type,other_medical,medical_diagnosis,has_slt_label,num_slt_labels,slt_label_paths,audio_path,recorded_timestamp
+09M,Assessment,001C,Funny Shaun is washing a dirty dish,7.57,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/001C.wav,26/10/2017 10:54:30
+09M,Assessment,002C,Cheeky Charlie's watching a football match,7.721,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/002C.wav,26/10/2017 10:54:41
+09M,Assessment,003C,Jolly John's got a magic badge,6.873,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/003C.wav,26/10/2017 10:54:52
+09M,Assessment,004C,Happy Karen is making a cake,6.722,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/004C.wav,26/10/2017 10:55:02
+09M,Assessment,005C,Baby Gary's got a bag of Lego,6.467,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/005C.wav,26/10/2017 10:55:24
+09M,Assessment,006C,The puppy is playing with a rope,6.56,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/006C.wav,26/10/2017 10:55:34
+09M,Assessment,007C,Bouncy Bob is a baby boy,7.094,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/007C.wav,26/10/2017 10:55:44
+09M,Assessment,008C,The phone fell off the shelf,6.374,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/008C.wav,26/10/2017 10:55:54
+09M,Assessment,009C,The hamster scrambled up Stewart's sleeve,8.638,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/009C.wav,26/10/2017 10:56:06
+09M,Assessment,010C,The nasty boy tossed the basket into the box,10.588,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/010C.wav,26/10/2017 10:56:19
+09M,Assessment,011E,swallow cor beg,3.146,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/011E.wav,26/10/2017 10:56:33
+09M,Assessment,012E,swallow cor beg,5.19,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/012E.wav,26/10/2017 10:57:48
+09M,Assessment,013B,asa,3.959,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/013B.wav,26/10/2017 10:57:55
+09M,Assessment,014B,apa,11.68,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/014B.wav,26/10/2017 10:48:24
+09M,Assessment,015B,ama,11.923,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/015B.wav,26/10/2017 10:48:40
+09M,Assessment,016B,afa,12.423,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/016B.wav,26/10/2017 10:48:58
+09M,Assessment,017C,I saw Sam sitting on a bus,7.349,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/017C.wav,26/10/2017 10:58:55
+09M,Assessment,018C,Funny Shaun is washing a dirty dish,8.452,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/018C.wav,26/10/2017 10:59:06
+09M,Assessment,019C,Cheeky Charlie's watching a football match,6.943,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/019C.wav,26/10/2017 10:59:16
+09M,Assessment,020C,Jolly John's got a magic badge,6.757,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/020C.wav,26/10/2017 10:59:26
+09M,Assessment,021C,The hamster scrambled up Stewart's sleeve,7.848,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/021C.wav,26/10/2017 10:59:37
+09M,Assessment,022C,The nasty boy tossed the basket into the box,10.53,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/022C.wav,26/10/2017 10:59:51
+09M,Assessment,023E,swallow cor end,6.188,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/023E.wav,26/10/2017 11:00:01
+09M,Assessment,024E,swallow sag beg,4.899,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/024E.wav,26/10/2017 11:01:08
+09M,Assessment,025A,"a keep, a shoot, a chap, a suit",12.62,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/025A.wav,26/10/2017 10:51:29
+09M,Assessment,026B,ata,11.738,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-026B-0.TextGrid,core-cleft/core/09M/Assessment/026B.wav,26/10/2017 11:01:41
+09M,Assessment,027B,ana,7.779,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-027B-0.TextGrid,core-cleft/core/09M/Assessment/027B.wav,26/10/2017 11:01:53
+09M,Assessment,028B,ara,8.046,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-028B-0.TextGrid,core-cleft/core/09M/Assessment/028B.wav,26/10/2017 11:02:06
+09M,Assessment,029B,atha,10.844,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/029B.wav,26/10/2017 11:02:30
+09M,Assessment,030B,asa,10.403,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-030B-0.TextGrid,core-cleft/core/09M/Assessment/030B.wav,26/10/2017 11:02:45
+09M,Assessment,031B,asha,10.077,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-031B-0.TextGrid,core-cleft/core/09M/Assessment/031B.wav,26/10/2017 11:02:59
+09M,Assessment,032B,ala,9.3,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-032B-0.TextGrid,core-cleft/core/09M/Assessment/032B.wav,26/10/2017 11:03:11
+09M,Assessment,033B,aya,8.22,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-033B-0.TextGrid,core-cleft/core/09M/Assessment/033B.wav,26/10/2017 11:03:25
+09M,Assessment,034B,aka,8.882,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-034B-0.TextGrid,core-cleft/core/09M/Assessment/034B.wav,26/10/2017 11:03:38
+09M,Assessment,035B,acha,8.011,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,2,labels-cleft/slt_labels/09M-Assessment-035B-0.TextGrid;labels-cleft/slt_labels/09M-Assessment-035B-1.TextGrid,core-cleft/core/09M/Assessment/035B.wav,26/10/2017 11:03:50
+09M,Assessment,036A,bang,7.175,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-036A-0.TextGrid,core-cleft/core/09M/Assessment/036A.wav,26/10/2017 11:04:05
+09M,Assessment,037B,apa,8.406,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/037B.wav,26/10/2017 11:04:20
+09M,Assessment,038B,ama,8.719,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/038B.wav,26/10/2017 11:04:32
+09M,Assessment,039B,afa,8.812,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/039B.wav,26/10/2017 11:04:45
+09M,Assessment,040B,awa,10.844,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-040B-0.TextGrid,core-cleft/core/09M/Assessment/040B.wav,26/10/2017 11:04:59
+09M,Assessment,041B,iki,9.207,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-041B-0.TextGrid,core-cleft/core/09M/Assessment/041B.wav,26/10/2017 11:05:18
+09M,Assessment,042B,oko,9.636,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-042B-0.TextGrid,core-cleft/core/09M/Assessment/042B.wav,26/10/2017 11:05:34
+09M,Assessment,043B,iti,9.369,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-043B-0.TextGrid,core-cleft/core/09M/Assessment/043B.wav,26/10/2017 11:05:47
+09M,Assessment,044B,oto,10.31,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/044B.wav,26/10/2017 11:06:01
+09M,Assessment,045B,oto,8.789,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,yes,1,labels-cleft/slt_labels/09M-Assessment-045B-0.TextGrid,core-cleft/core/09M/Assessment/045B.wav,26/10/2017 11:06:28
+09M,Assessment,046A,swallow cor beg,10.925,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/046A.wav,26/10/2017 10:57:48
+09M,Assessment,047A,"a she, a kip, a sore, a chop",10.356,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/047A.wav,26/10/2017 11:07:08
+09M,Assessment,048A,"a chew, a shack, a ship, a cool",12.539,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/048A.wav,26/10/2017 11:07:24
+09M,Assessment,049A,"a keep, a shoot, a chap, a suit",10.902,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/049A.wav,26/10/2017 11:07:39
+09M,Assessment,050A,"a core, a sip, a cop, a tool",24.764,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/050A.wav,26/10/2017 11:08:08
+09M,Assessment,051A,"a tip, a top, a sea, a tan",11.029,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/051A.wav,26/10/2017 11:08:35
+09M,Assessment,052A,"a can, a cheer, a shock, a sack",16.335,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/052A.wav,26/10/2017 11:08:55
+09M,Assessment,053A,"a shore, a team",5.921,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/053A.wav,26/10/2017 11:09:06
+09M,Assessment,054C,Jolly John's got a magic badge,7.988,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/054C.wav,26/10/2017 10:59:26
+09M,Assessment,055C,The hamster scrambled up Stewart's sleeve,7.407,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/055C.wav,26/10/2017 10:59:37
+09M,Assessment,056C,The nasty boy tossed the basket into the box,6.432,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/056C.wav,26/10/2017 10:59:51
+09M,Assessment,057C,I saw Sam sitting on a bus,7.094,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/057C.wav,26/10/2017 11:09:49
+09M,Assessment,058C,Funny Shaun is washing a dirty dish,8.475,22050,1,M,9.33,UCLP,yes,Cluttering and stuttering,no,0,,core-cleft/core/09M/Assessment/058C.wav,26/10/2017 11:10:01
+12F,Assessment,001E,swallow sag beg,14.106,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/001E.wav,01/11/2017 11:00:03
+12F,Assessment,002A,1 2 3 4 5 6 7 8 9 10,8.313,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/002A.wav,01/11/2017 11:00:34
+12F,Assessment,003B,ata,13.723,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-003B-0.TextGrid,core-cleft/core/12F/Assessment/003B.wav,01/11/2017 11:00:56
+12F,Assessment,004B,ana,11.842,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-004B-0.TextGrid,core-cleft/core/12F/Assessment/004B.wav,01/11/2017 11:01:14
+12F,Assessment,005B,ara,11.227,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/005B.wav,01/11/2017 11:01:46
+12F,Assessment,006B,ara,9.66,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-006B-0.TextGrid,core-cleft/core/12F/Assessment/006B.wav,01/11/2017 11:03:43
+12F,Assessment,007B,atha,7.175,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/007B.wav,01/11/2017 11:03:58
+12F,Assessment,008B,asa,23.22,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/008B.wav,01/11/2017 11:04:40
+12F,Assessment,009B,asa,13.468,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/009B.wav,01/11/2017 11:06:59
+12F,Assessment,010B,asha,9.439,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/010B.wav,01/11/2017 11:07:15
+12F,Assessment,011B,ala,6.351,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-011B-0.TextGrid,core-cleft/core/12F/Assessment/011B.wav,01/11/2017 11:07:39
+12F,Assessment,012B,aya,21.571,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-012B-0.TextGrid,core-cleft/core/12F/Assessment/012B.wav,01/11/2017 11:08:20
+12F,Assessment,013B,acha,8.359,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/013B.wav,01/11/2017 11:09:03
+12F,Assessment,014B,aka,8.301,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-014B-0.TextGrid,core-cleft/core/12F/Assessment/014B.wav,01/11/2017 11:09:21
+12F,Assessment,015A,bang,13.201,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-015A-0.TextGrid,core-cleft/core/12F/Assessment/015A.wav,01/11/2017 11:09:50
+12F,Assessment,016B,apa,28.491,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/016B.wav,01/11/2017 11:10:26
+12F,Assessment,017B,ama,14.501,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/017B.wav,01/11/2017 11:10:52
+12F,Assessment,018B,afa,4.772,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/018B.wav,01/11/2017 11:12:40
+12F,Assessment,019B,awa,19.4,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/019B.wav,01/11/2017 11:13:14
+12F,Assessment,020B,iki,9.567,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/020B.wav,01/11/2017 11:14:32
+12F,Assessment,021B,oko,8.522,22050,1,F,5.42,CP,yes,Stickler Syndrome,yes,1,labels-cleft/slt_labels/12F-Assessment-021B-0.TextGrid,core-cleft/core/12F/Assessment/021B.wav,01/11/2017 11:14:52
+12F,Assessment,022B,iti,17.519,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/022B.wav,01/11/2017 11:15:21
+12F,Assessment,023B,oto,22.349,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/023B.wav,01/11/2017 11:16:35
+12F,Assessment,024A,"a sock, a tore, a chore, a chip",21.92,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/024A.wav,01/11/2017 11:17:26
+12F,Assessment,025A,"a sock, a tore, a chore, a chip",10.786,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/025A.wav,01/11/2017 11:18:12
+12F,Assessment,026A,"a she, a kip, a sore, a chop",34.818,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/026A.wav,01/11/2017 11:18:56
+12F,Assessment,027A,"a chew, a shack, a ship, a cool",12.992,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/027A.wav,01/11/2017 11:19:15
+12F,Assessment,028A,"a keep, a shoot, a chap, a suit",9.66,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/028A.wav,01/11/2017 11:19:34
+12F,Assessment,029A,"a core, a sip, a cop, a tool",15.186,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/029A.wav,01/11/2017 11:20:36
+12F,Assessment,030A,"a tip, a top, a sea, a tan",11.088,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/030A.wav,01/11/2017 11:20:55
+12F,Assessment,031A,"a can, a cheer, a shock, a sack",11.238,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/031A.wav,01/11/2017 11:21:12
+12F,Assessment,032A,"a shore, a team",9.218,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/032A.wav,01/11/2017 11:21:29
+12F,Assessment,033C,Naughty Neil saw a robin in a nest,9.927,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/033C.wav,01/11/2017 11:21:49
+12F,Assessment,034C,Tiny Tim is putting a hat on,5.271,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/034C.wav,01/11/2017 11:21:57
+12F,Assessment,035C,My daddy mended a door,5.155,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/035C.wav,01/11/2017 11:22:06
+12F,Assessment,036C,I saw Sam sitting on a bus,5.074,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/036C.wav,01/11/2017 11:22:15
+12F,Assessment,037C,Funny Shaun is washing a dirty dish,5.224,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/037C.wav,01/11/2017 11:22:59
+12F,Assessment,038C,Cheeky Charlie's watching a football match,13.607,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/038C.wav,01/11/2017 11:23:20
+12F,Assessment,039C,Jolly John's got a magic badge,6.49,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/039C.wav,01/11/2017 11:23:30
+12F,Assessment,040C,Happy Karen is making a cake,8.545,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/040C.wav,01/11/2017 11:23:42
+12F,Assessment,041C,Baby Gary's got a bag of Lego,15.058,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/041C.wav,01/11/2017 11:24:01
+12F,Assessment,042C,The puppy is playing with a rope,5.944,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/042C.wav,01/11/2017 11:24:11
+12F,Assessment,043C,Bouncy Bob is a baby boy,7.535,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/043C.wav,01/11/2017 11:24:22
+12F,Assessment,044C,The phone fell off the shelf,6.42,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/044C.wav,01/11/2017 11:24:57
+12F,Assessment,045C,The hamster scrambled up Stewart's sleeve,2.601,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/045C.wav,01/11/2017 11:25:08
+12F,Assessment,046C,The nasty boy tossed the basket into the box,10.298,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/046C.wav,01/11/2017 11:25:51
+12F,Assessment,047E,swallow sag end,38.986,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/047E.wav,01/11/2017 11:26:40
+12F,Assessment,048E,swallow cor beg,8.475,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/048E.wav,01/11/2017 11:29:40
+12F,Assessment,049B,asa,25.043,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/049B.wav,01/11/2017 11:30:36
+12F,Assessment,050B,asha,14.71,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/050B.wav,01/11/2017 11:31:53
+12F,Assessment,051B,acha,16.475,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/051B.wav,01/11/2017 11:33:58
+12F,Assessment,052C,I saw Sam sitting on a bus,10.797,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/052C.wav,01/11/2017 11:34:23
+12F,Assessment,053C,I saw Sam sitting on a bus,6.107,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/053C.wav,01/11/2017 11:34:44
+12F,Assessment,054C,Funny Shaun is washing a dirty dish,6.676,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/054C.wav,01/11/2017 11:34:55
+12F,Assessment,055C,Cheeky Charlie's watching a football match,5.538,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/055C.wav,01/11/2017 11:35:03
+12F,Assessment,056C,Jolly John's got a magic badge,5.584,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/056C.wav,01/11/2017 11:35:11
+12F,Assessment,057C,The hamster scrambled up Stewart's sleeve,8.022,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/057C.wav,01/11/2017 11:35:23
+12F,Assessment,058C,The nasty boy tossed the basket into the box,8.905,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/058C.wav,01/11/2017 11:35:35
+12F,Assessment,059E,swallow cor end,14.176,22050,1,F,5.42,CP,yes,Stickler Syndrome,no,0,,core-cleft/core/12F/Assessment/059E.wav,01/11/2017 11:35:56
+14F,Assessment,001A,swallow sag beg,11.041,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/001A.wav,08/11/2017 15:21:37
+14F,Assessment,002B,ata,8.882,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-002B-0.TextGrid,core-cleft/core/14F/Assessment/002B.wav,08/11/2017 15:22:39
+14F,Assessment,003B,ata,7.732,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-003B-0.TextGrid,core-cleft/core/14F/Assessment/003B.wav,08/11/2017 15:22:39
+14F,Assessment,004B,ara,7.732,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-004B-0.TextGrid,core-cleft/core/14F/Assessment/004B.wav,08/11/2017 15:23:00
+14F,Assessment,005B,atha,9.056,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-005B-0.TextGrid,core-cleft/core/14F/Assessment/005B.wav,08/11/2017 15:23:49
+14F,Assessment,006B,asa,8.359,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/006B.wav,08/11/2017 15:24:02
+14F,Assessment,007B,asha,9.195,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-007B-0.TextGrid,core-cleft/core/14F/Assessment/007B.wav,08/11/2017 15:24:15
+14F,Assessment,008B,ala,9.392,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-008B-0.TextGrid,core-cleft/core/14F/Assessment/008B.wav,08/11/2017 15:24:35
+14F,Assessment,009B,asha,8.661,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-009B-0.TextGrid,core-cleft/core/14F/Assessment/009B.wav,08/11/2017 15:24:49
+14F,Assessment,010B,aya,8.824,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-010B-0.TextGrid,core-cleft/core/14F/Assessment/010B.wav,08/11/2017 15:25:04
+14F,Assessment,011B,aka,8.243,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-011B-0.TextGrid,core-cleft/core/14F/Assessment/011B.wav,08/11/2017 15:25:17
+14F,Assessment,012A,bang,8.104,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-012A-0.TextGrid,core-cleft/core/14F/Assessment/012A.wav,08/11/2017 15:25:45
+14F,Assessment,013B,apa,7.918,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/013B.wav,08/11/2017 15:25:58
+14F,Assessment,014B,apa,7.918,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/014B.wav,08/11/2017 15:25:58
+14F,Assessment,015B,ama,8.197,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/015B.wav,08/11/2017 15:26:09
+14F,Assessment,016B,afa,8.371,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-016B-0.TextGrid,core-cleft/core/14F/Assessment/016B.wav,08/11/2017 15:26:20
+14F,Assessment,017B,awa,8.766,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-017B-0.TextGrid,core-cleft/core/14F/Assessment/017B.wav,08/11/2017 15:26:37
+14F,Assessment,018B,iki,7.012,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-018B-0.TextGrid,core-cleft/core/14F/Assessment/018B.wav,08/11/2017 15:26:47
+14F,Assessment,019B,oko,7.906,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-019B-0.TextGrid,core-cleft/core/14F/Assessment/019B.wav,08/11/2017 15:27:10
+14F,Assessment,020B,iti,8.069,22050,1,F,5.33,BCLP,no,None,yes,1,labels-cleft/slt_labels/14F-Assessment-020B-0.TextGrid,core-cleft/core/14F/Assessment/020B.wav,08/11/2017 15:27:30
+14F,Assessment,021A,"a sock, a tore, a chore, a chip",5.224,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/021A.wav,08/11/2017 15:28:03
+14F,Assessment,022A,"a sock, a tore, a chore, a chip",5.224,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/022A.wav,08/11/2017 15:28:03
+14F,Assessment,023A,"a sock, a tore, a chore, a chip",12.365,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/023A.wav,08/11/2017 15:28:21
+14F,Assessment,024A,"a she, a kip, a sore, a chop",7.639,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/024A.wav,08/11/2017 15:28:35
+14F,Assessment,025A,"a chew, a shack, a ship, a cool",7.895,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/025A.wav,08/11/2017 15:28:50
+14F,Assessment,026A,"a keep, a shoot, a chap, a suit",6.687,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/026A.wav,08/11/2017 15:29:00
+14F,Assessment,027A,"a core, a sip, a cop, a tool",9.927,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/027A.wav,08/11/2017 15:29:13
+14F,Assessment,028A,"a tip, a top, a sea, a tan",6.629,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/028A.wav,08/11/2017 15:29:23
+14F,Assessment,029A,"a can, a cheer, a shock, a sack",7.651,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/029A.wav,08/11/2017 15:29:34
+14F,Assessment,030C,Naughty Neil saw a robin in a nest,4.435,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/030C.wav,08/11/2017 15:29:57
+14F,Assessment,031C,Naughty Neil saw a robin in a nest,4.435,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/031C.wav,08/11/2017 15:29:57
+14F,Assessment,032C,Tiny Tim is putting a hat on,4.389,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/032C.wav,08/11/2017 15:30:04
+14F,Assessment,033C,My daddy mended a door,3.843,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/033C.wav,08/11/2017 15:30:11
+14F,Assessment,034C,My daddy mended a door,2.543,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/034C.wav,08/11/2017 15:30:54
+14F,Assessment,035C,I saw Sam sitting on a bus,4.83,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/035C.wav,08/11/2017 15:31:01
+14F,Assessment,036C,Funny Shaun is washing a dirty dish,6.49,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/036C.wav,08/11/2017 15:31:10
+14F,Assessment,037C,Cheeky Charlie's watching a football match,5.515,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/037C.wav,08/11/2017 15:31:18
+14F,Assessment,038C,Jolly John's got a magic badge,4.005,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/038C.wav,08/11/2017 15:31:25
+14F,Assessment,039C,Happy Karen is making a cake,4.54,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/039C.wav,08/11/2017 15:31:35
+14F,Assessment,040C,Baby Gary's got a bag of Lego,4.377,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/040C.wav,08/11/2017 15:31:42
+14F,Assessment,041C,The puppy is playing with a rope,4.098,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/041C.wav,08/11/2017 15:31:48
+14F,Assessment,042C,Bouncy Bob is a baby boy,3.994,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/042C.wav,08/11/2017 15:31:55
+14F,Assessment,043C,The phone fell off the shelf,2.902,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/043C.wav,08/11/2017 15:32:01
+14F,Assessment,044C,The hamster scrambled up Stewart's sleeve,5.306,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/044C.wav,08/11/2017 15:32:09
+14F,Assessment,045E,swallow sag end,8.893,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/045E.wav,08/11/2017 15:32:32
+14F,Assessment,046E,swallow cor beg,8.475,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/046E.wav,08/11/2017 15:33:45
+14F,Assessment,047B,asa,8.371,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/047B.wav,08/11/2017 15:34:04
+14F,Assessment,048B,asa,8.371,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/048B.wav,08/11/2017 15:34:04
+14F,Assessment,049B,asha,8.394,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/049B.wav,08/11/2017 15:34:15
+14F,Assessment,050C,I saw Sam sitting on a bus,3.158,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/050C.wav,08/11/2017 15:34:41
+14F,Assessment,051C,I saw Sam sitting on a bus,3.158,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/051C.wav,08/11/2017 15:34:41
+14F,Assessment,052C,Funny Shaun is washing a dirty dish,5.05,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/052C.wav,08/11/2017 15:34:51
+14F,Assessment,053C,Cheeky Charlie's watching a football match,4.748,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/053C.wav,08/11/2017 15:34:59
+14F,Assessment,054C,Jolly John's got a magic badge,4.447,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/054C.wav,08/11/2017 15:35:06
+14F,Assessment,055C,The hamster scrambled up Stewart's sleeve,5.399,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/055C.wav,08/11/2017 15:35:14
+14F,Assessment,056E,swallow cor end,5.201,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/056E.wav,08/11/2017 15:35:33
+14F,Assessment,057E,swallow sag beg,39.079,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Assessment/057E.wav,08/11/2017 15:49:25
+14F,Therapy,001B,ana,7.825,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/001B.wav,08/11/2017 15:22:49
+14F,Therapy,002A,elephant umbrella train swing,20.828,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/002A.wav,08/11/2017 15:43:26
+14F,Therapy,003A,bread duck giraffe five,13.212,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/003A.wav,08/11/2017 15:43:46
+14F,Therapy,004A,teeth watch orange school,14.93,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/004A.wav,08/11/2017 15:44:07
+14F,Therapy,005A,crab biscuits thank you helicopter,17.519,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/005A.wav,08/11/2017 15:44:31
+14F,Therapy,006A,egg splash square pig,9.218,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/006A.wav,08/11/2017 15:44:46
+14F,Therapy,007A,gloves queen three frog,14.454,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/007A.wav,08/11/2017 15:45:06
+14F,Therapy,008A,yellow strawberry spider web,12.887,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/008A.wav,08/11/2017 15:45:23
+14F,Therapy,009A,sheep snake pram feather,7.709,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/009A.wav,08/11/2017 15:45:35
+14F,Therapy,010A,tomato monkey toothbrush apple,28.874,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/010A.wav,08/11/2017 15:46:07
+14F,Therapy,011A,knife van ear this,35.213,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/011A.wav,08/11/2017 15:46:53
+14F,Therapy,012A,scissors fishing lighthouse zebra,8.499,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/012A.wav,08/11/2017 15:47:06
+14F,Therapy,013A,kitchen sausage tiger rabbit,21.084,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/013A.wav,08/11/2017 15:47:31
+14F,Therapy,014A,book boy,38.94,22050,1,F,5.33,BCLP,no,None,no,0,,core-cleft/core/14F/Therapy/014A.wav,08/11/2017 15:48:14
